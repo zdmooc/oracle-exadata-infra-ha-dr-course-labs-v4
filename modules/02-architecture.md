@@ -1,122 +1,128 @@
     # Module 02 — Architecture
 
-    ## Objectif du module
+    ## 1. Objectif pédagogique
 
-    Ce module permet de maîtriser **Architecture Database Machine, compute, storage, réseau, Grid Infrastructure et ASM**. À la fin du module, l’apprenant doit savoir expliquer le sujet, identifier les composants Exadata concernés, collecter des preuves en lecture seule et produire un livrable exploitable par une équipe DBA, infrastructure, support ou cloud.
+    Décrire l’architecture technique Exadata : DB servers, storage cells, ASM, GI et réseau privé. Le chapitre vise une compréhension opérationnelle et théorique : l’étudiant doit pouvoir expliquer le mécanisme, reconnaître les composants impliqués, lire les principales vues ou commandes et résoudre un cas d’école sans modifier l’environnement.
 
-    ## Alignement avec le cours officiel
+    ## 2. Pourquoi ce sujet est important
 
-    Ce module couvre le thème Oracle University **Architecture** du parcours **Exadata Database Machine Administration Workshop**. Il enrichit le thème avec une approche infrastructure-first, des commandes non destructives, des métriques observables et un mini-lab ciblé.
+    L’architecture Exadata sépare les rôles : les DB servers exécutent SQL et instances, les storage cells stockent et optimisent les I/O, ASM fournit la couche volume Oracle et le réseau privé transporte les blocs ou résultats filtrés.
 
-    ## Concepts clés
+    Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
-    | Concept | Explication opérationnelle |
-    |---|---|
-    | **compute layer** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
-| **storage layer** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
-| **private fabric** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
-| **ASM allocation units** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
-| **cell services** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
-| **RAC interconnect** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+    ## 3. Concepts clés expliqués
 
-    ## Architecture concernée
-
-    Le module décrit les chemins I/O entre sessions Oracle, ASM, cellules, flash/disques et réseau privé. Il met en relation scan SQL, I/O classique, redondance ASM et services Exadata System Software.
-
-    | Couche | Rôle dans ce module | Preuve typique |
+    | Concept | Définition claire | Exemple concret |
     |---|---|---|
-    | DB servers | Hébergent les instances, services, agents et outils Oracle. | `crsctl`, `srvctl`, vues `v$`/`gv$` si pertinent. |
-    | Storage cells | Fournissent stockage intelligent, flash, offload, métriques et alertes. | `cellcli list ...` en lecture seule. |
-    | ASM / Grid Infrastructure | Assure cluster, diskgroups, services et accès au stockage. | `asmcmd`, `crsctl`, vues ASM. |
-    | Réseau Exadata | Transporte client, backup, administration et trafic privé. | Statistiques interfaces, routage, état fabric. |
-    | Outils support | AHF, Exachk, TFA, EM selon le module. | Rapports santé, bundles, incidents, métriques. |
+    | **RAC** | Oracle Real Application Clusters permet à plusieurs instances d’accéder à la même base via un cluster. | Deux DB servers peuvent héberger deux instances d’une même base. |
+| **ASM** | Automatic Storage Management répartit les fichiers Oracle sur des disques ASM issus des grid disks Exadata. | Les diskgroups DATA et RECO consomment des grid disks créés dans les cells. |
+| **Interconnect privé** | Réseau RoCE ou InfiniBand utilisé pour le trafic cluster et les échanges rapides entre DB servers et cells. | Un problème de fabric peut produire de la latence I/O ou des symptômes RAC. |
 
-    ## Fonctionnement détaillé
+    Ces concepts doivent être étudiés ensemble. Par exemple, **RAC** n’a pas la même signification isolément que dans une architecture RAC, ASM et storage cells. La compréhension vient de la relation entre objet Oracle, ressource Exadata et workload applicatif.
 
-    Le sujet doit être analysé par couches. L’approche recommandée consiste à formuler un symptôme, localiser la couche suspecte, collecter des preuves minimales, interpréter ces preuves, puis décider d’une action prudente. Le support ne propose pas de modification destructive par défaut. Toute action de changement, de patching, de redémarrage, de mise hors ligne ou de suppression doit être traitée dans un runbook validé et explicitement signalée comme risquée.
+    ## 4. Architecture concernée
 
-    Pour ce module, l’analyse doit rester spécifique à **Architecture**. Les preuves attendues ne sont pas un simple inventaire système ; elles doivent démontrer la compréhension du mécanisme Exadata concerné, de ses dépendances et de ses limites.
+    | Composant | Rôle dans ce chapitre |
+    |---|---|
+    | Database servers | Exécutent les instances, services, agents et outils Oracle liés au module. |
+| Storage cells | Apportent stockage intelligent, flash, offload, alertes ou métriques lorsque le sujet touche les I/O. |
+| ASM / Grid Infrastructure | Fournissent cluster, diskgroups, ressources RAC et accès aux fichiers Oracle. |
+| Réseau RoCE / InfiniBand | Transporte les échanges internes rapides et peut influencer latence et disponibilité. |
+| Outils Oracle | Enterprise Manager, AHF, Exachk, TFA, RMAN ou Data Guard selon le thème étudié. |
 
-    ## Commandes et vues utiles en lecture
+    Les diagrammes associés au chapitre sont :
 
-    Les commandes suivantes sont fournies comme exemples de lecture. Elles doivent être adaptées à la version, aux privilèges et aux standards de l’environnement. Les commandes nécessitant des privilèges élevés sont indiquées en commentaire lorsqu’elles peuvent varier selon site.
+    - [`architecture-globale-exadata.mmd`](../diagrams/architecture-globale-exadata.mmd)
+- [`physical-cell-grid-asm.mmd`](../diagrams/physical-cell-grid-asm.mmd)
+- [`reseau-client-admin-backup-interconnect.mmd`](../diagrams/reseau-client-admin-backup-interconnect.mmd)
+
+    ## 5. Fonctionnement détaillé
+
+    L’architecture Exadata sépare les rôles : les DB servers exécutent SQL et instances, les storage cells stockent et optimisent les I/O, ASM fournit la couche volume Oracle et le réseau privé transporte les blocs ou résultats filtrés.
+
+    Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
+
+    Pour ce module, les notions centrales sont **RAC, ASM, Interconnect privé**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
+
+    ## 6. Exemple concret
+
+    Un incident de performance peut provenir du plan SQL, d’ASM, d’une cell saturée ou du réseau privé ; le chapitre montre comment chaque couche intervient.
+
+    Dans ce scénario, l’analyse commence par le symptôme métier, puis remonte vers la couche Oracle concernée. Si le sujet touche les I/O, il faut différencier le temps passé dans Oracle Database, les attentes liées aux cells, la distribution ASM et la santé des storage cells. Si le sujet touche la haute disponibilité, il faut distinguer disponibilité locale RAC, continuité de service, sauvegarde et reprise après sinistre.
+
+    ## 7. Commandes, vues et métriques utiles
+
+    Les commandes ci-dessous sont données comme exemples de lecture. Elles doivent être adaptées aux noms de bases, privilèges, versions et conventions du site.
 
     ```bash
-    asmcmd lsdg
-cellcli -e list griddisk attributes name,asmmodestatus,asmdeactivationoutcome
-crsctl stat res -t
-ip -s link show  # lecture réseau, sortie à interpréter selon OS
+    crsctl stat res -t
+srvctl status database -d <db_unique_name> -v
+select instance_name,status,host_name from gv$instance;
     ```
 
-    ## Métriques à analyser
-
-    | Métrique ou preuve | Interprétation prudente |
+    | Élément à lire | Interprétation |
     |---|---|
-    | ASM free_mb/usable_file_mb | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
-| état griddisk ASM | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
-| ressources CRS offline | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
-| erreurs et drops interfaces | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
+    | RAC | Cette information indique comment le mécanisme RAC se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
+| ASM | Cette information indique comment le mécanisme ASM se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
+| Interconnect privé | Cette information indique comment le mécanisme Interconnect privé se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
 
-    ## Exemple d’analyse
+    ## 8. Interprétation des résultats
 
-    **Symptôme.** Un ralentissement peut venir du SQL, d’ASM, d’une cell, du réseau privé ou d’un service CRS. La méthode consiste à suivre le chemin logique et collecter une preuve par couche.
+    L’interprétation doit répondre à une question technique précise. Une valeur isolée ne suffit pas : une latence se compare à une période comparable, un volume d’I/O se compare à un plan SQL et un état RAC se compare au placement attendu des services. Les métriques Exadata sont particulièrement utiles lorsqu’elles expliquent pourquoi un volume important de données a été lu, filtré, renvoyé ou retardé.
 
-    **Couche suspecte.** La couche doit être choisie à partir du symptôme : base, ASM, storage cell, réseau, monitoring, sauvegarde, support ou cloud. L’analyse ne doit pas supposer la cause avant collecte.
+    Dans les chapitres performance, les valeurs liées aux bytes, événements `cell`, AWR ou ASH indiquent le chemin dominant. Dans les chapitres HA/DR, les états de rôle, lag, services et ressources cluster décrivent la capacité réelle à basculer ou maintenir le service. Dans les chapitres support et maintenance, les rapports AHF, Exachk ou TFA doivent être lus comme des aides structurées, pas comme des remplacements de raisonnement.
 
-    **Preuves à collecter.** Les preuves minimales sont les commandes et vues listées plus haut, complétées par l’heure de début, l’impact métier, le périmètre touché et l’état avant/après si disponible.
+    ## 9. Erreurs fréquentes
 
-    **Interprétation.** Les résultats sont comparés avec un état de référence connu, une période équivalente ou les recommandations Oracle applicables. Le support évite d’inventer des seuils universels.
+    | Erreur | Cause probable | Correction pédagogique |
+    |---|---|---|
+    | Confondre symptôme et cause | Le premier message visible vient parfois d’une couche différente de la cause réelle. | Reconstituer le chemin technique avant de conclure. |
+    | Appliquer une recette générique | Exadata dépend fortement du workload, du plan SQL, de la version et du modèle de service. | Relire les composants du chapitre et adapter le diagnostic. |
+    | Ignorer les dépendances | Une base RAC dépend de GI, ASM, réseau privé et storage cells. | Vérifier les dépendances avant toute hypothèse. |
+    | Oublier les limites du mécanisme | Certaines fonctions Exadata ne s’appliquent pas à tous les accès ou toutes les charges. | Identifier les conditions d’éligibilité et les cas d’exclusion. |
 
-    **Prochaine action prudente.** Si l’action dépasse la lecture, produire un runbook, obtenir validation CAB ou support, et documenter rollback, impact et communication.
+    ## 10. Bonnes pratiques
 
-    ## Erreurs fréquentes
-
-    | Erreur spécifique | Correction recommandée |
+    | Bonne pratique | Application concrète |
     |---|---|
-    | chercher uniquement dans AWR sans vérifier cells | Produire une preuve, relire le runbook et escalader si l’action dépasse la lecture. |
-| confondre cell disk et grid disk | Produire une preuve, relire le runbook et escalader si l’action dépasse la lecture. |
-| ignorer le réseau privé dans une analyse I/O | Produire une preuve, relire le runbook et escalader si l’action dépasse la lecture. |
+    | Partir du mécanisme | Dessiner le chemin DB → ASM → cell → réseau → retour résultat selon le sujet. |
+    | Séparer lecture et changement | Les commandes de lecture servent à comprendre ; les changements exigent runbook et validation. |
+    | Comparer avec un état de référence | Une valeur a du sens lorsqu’elle est rapprochée d’une période saine ou d’une cible prévue. |
+    | Documenter la version | Les fonctionnalités et commandes peuvent varier selon génération Exadata et version Oracle. |
 
-    ## Bonnes pratiques
+    ## 11. Exercice pratique
 
-    | Bonne pratique | Mise en œuvre |
-    |---|---|
-    | dessiner le chemin I/O | À intégrer dans le livrable du module. |
-| documenter le mapping storage | À intégrer dans le livrable du module. |
-| valider état CRS avant tout test performance | À intégrer dans le livrable du module. |
+    Vous êtes responsable du sujet **Architecture** sur une plateforme Exadata de formation. À partir du scénario suivant, rédigez une analyse de deux pages :
 
-    ## Mini-lab ciblé
+    > Un incident de performance peut provenir du plan SQL, d’ASM, d’une cell saturée ou du réseau privé ; le chapitre montre comment chaque couche intervient.
 
-    **Objectif.** Tracer le chemin d’une requête depuis session Oracle jusqu’aux grid disks et annoter les points d’observation.
+    Votre réponse doit inclure un schéma simple des composants impliqués, trois commandes ou vues à exécuter, deux métriques à lire, les erreurs à éviter et une recommandation finale.
 
-    **Étapes.** L’apprenant prépare un dossier de travail, exécute uniquement les commandes read-only adaptées à son environnement, capture les sorties horodatées, interprète les métriques propres au module et rédige une conclusion. Aucune commande de suppression, redémarrage, patching, offline/drop ou modification de paramètre n’est autorisée dans ce mini-lab.
+    ## 12. Corrigé de l’exercice
 
-    **Résultat attendu.** Le résultat doit relier un symptôme ou un objectif pédagogique à des preuves Exadata spécifiques, et non à un simple inventaire générique.
+    Une bonne réponse commence par identifier les composants du chapitre : **RAC, ASM, Interconnect privé**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
-    ## Questions de validation
+    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
-    1. Quel est le rôle d’ASM sur Exadata ?
-2. Où se situent les optimisations Smart Scan ?
+    ## 13. Synthèse à retenir
 
-    ## Livrables attendus
+    ```text
+    À retenir
+    - Architecture fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - Les notions centrales du chapitre sont : RAC, ASM, Interconnect privé.
+    - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
+    - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
+    - Un bon administrateur Exadata relie toujours architecture, workload, métriques et impact métier.
+    ```
 
-    Schéma annoté d’architecture Exadata.
-
-
-## Diagrammes associés
-
-- [`architecture-globale-exadata.mmd`](../diagrams/architecture-globale-exadata.mmd)
-- [`reseau-client-admin-backup-interconnect.mmd`](../diagrams/reseau-client-admin-backup-interconnect.mmd)
 
 ## Références officielles
 
-Les références ci-dessous doivent être utilisées comme point d'entrée, puis ajustées selon la génération Exadata, la version Oracle Database et le modèle de service utilisé.
-
-| Référence | Usage |
+| Référence | Utilisation dans le module |
 |---|---|
-| [Oracle University — Exadata Database Machine Administration Workshop](https://education.oracle.com/exadata-database-machine-administration-workshop/courP_4599) | Alignement pédagogique du workshop. |
-| [Oracle Exadata System Software Documentation](https://docs.oracle.com/en/engineered-systems/exadata-database-machine/) | Administration Exadata, Storage Server, outils et maintenance. |
-| [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | HA/DR, Data Guard, sauvegarde, meilleures pratiques. |
-| [Oracle Database Backup and Recovery User's Guide](https://docs.oracle.com/en/database/) | RMAN, restauration, récupération et validation. |
-| [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, ORAchk, Exachk et TFA. |
+| [Oracle University — Exadata Database Machine Administration Workshop](https://education.oracle.com/exadata-database-machine-administration-workshop/courP_4599) | Cadre pédagogique général du workshop. |
+| [Oracle Exadata Documentation](https://docs.oracle.com/en/engineered-systems/exadata-database-machine/) | Administration Exadata, Storage Server, CellCLI, maintenance et monitoring. |
+| [Oracle Database Documentation](https://docs.oracle.com/en/database/) | Vues dynamiques, SQL, RMAN, Data Guard, AWR/ASH selon licences. |
+| [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | Principes HA/DR, Data Guard, sauvegarde et continuité de service. |
+| [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, Exachk, ORAchk, TFA et diagnostics automatisés. |
 

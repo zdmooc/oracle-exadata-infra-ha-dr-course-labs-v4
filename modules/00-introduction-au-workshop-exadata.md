@@ -1,12 +1,12 @@
-    # Module 06 — Exadata Storage Server Configuration
+    # Module 00 — Introduction au workshop Exadata
 
     ## 1. Objectif pédagogique
 
-    Apprendre le modèle des storage cells, objets CellCLI, disques, flash, alertes et métriques. Le chapitre vise une compréhension opérationnelle et théorique : l’étudiant doit pouvoir expliquer le mécanisme, reconnaître les composants impliqués, lire les principales vues ou commandes et résoudre un cas d’école sans modifier l’environnement.
+    Comprendre le rôle d’Exadata comme système intégré, les objectifs de formation et la progression du cours. Le chapitre vise une compréhension opérationnelle et théorique : l’étudiant doit pouvoir expliquer le mécanisme, reconnaître les composants impliqués, lire les principales vues ou commandes et résoudre un cas d’école sans modifier l’environnement.
 
     ## 2. Pourquoi ce sujet est important
 
-    Les storage cells ne sont pas de simples tiroirs disques. Elles exécutent un logiciel capable de gérer flash, disques, offload SQL, métriques et alertes. CellCLI est l’interface principale d’administration côté cell.
+    Le module introductif évite de réduire Exadata à une base de données rapide. Exadata est une architecture complète où Oracle Database, Grid Infrastructure, ASM, Exadata System Software et les storage cells travaillent ensemble.
 
     Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
@@ -14,11 +14,11 @@
 
     | Concept | Définition claire | Exemple concret |
     |---|---|---|
-    | **Physical Disk** | Disque physique présent dans une storage cell, support matériel de capacité ou performance selon modèle. | Une alerte predictive failure concerne d’abord un physical disk. |
-| **Cell Disk** | Objet logique créé à partir d’un physical disk et utilisé pour construire des grid disks. | Un disque physique peut correspondre à un cell disk. |
-| **Grid Disk** | Portion de cell disk présentée à ASM comme disque utilisable. | ASM voit des chemins issus de grid disks DATA ou RECO. |
+    | **Exadata Database Machine** | Plateforme Oracle intégrée associant serveurs de bases, cellules de stockage, réseau privé rapide et logiciels optimisés pour Oracle Database. | Une base RAC sur Exadata utilise ASM et les storage cells au lieu d’un stockage SAN classique. |
+| **Workshop d’administration** | Parcours de formation orienté installation logique, administration, monitoring, maintenance, sauvegarde, support et modèles cloud. | Le cours commence par l’architecture, puis aborde storage, performance, monitoring et patching. |
+| **Système engineered** | Système conçu, testé et supporté comme un ensemble cohérent matériel/logiciel. | Un diagnostic Exadata doit inclure DB servers, cells, réseau privé, ASM et outils support. |
 
-    Ces concepts doivent être étudiés ensemble. Par exemple, **Physical Disk** n’a pas la même signification isolément que dans une architecture RAC, ASM et storage cells. La compréhension vient de la relation entre objet Oracle, ressource Exadata et workload applicatif.
+    Ces concepts doivent être étudiés ensemble. Par exemple, **Exadata Database Machine** n’a pas la même signification isolément que dans une architecture RAC, ASM et storage cells. La compréhension vient de la relation entre objet Oracle, ressource Exadata et workload applicatif.
 
     ## 4. Architecture concernée
 
@@ -32,19 +32,19 @@
 
     Les diagrammes associés au chapitre sont :
 
-    - [`physical-cell-grid-asm.mmd`](../diagrams/physical-cell-grid-asm.mmd)
+    - [`architecture-globale-exadata.mmd`](../diagrams/architecture-globale-exadata.mmd)
 
     ## 5. Fonctionnement détaillé
 
-    Les storage cells ne sont pas de simples tiroirs disques. Elles exécutent un logiciel capable de gérer flash, disques, offload SQL, métriques et alertes. CellCLI est l’interface principale d’administration côté cell.
+    Le module introductif évite de réduire Exadata à une base de données rapide. Exadata est une architecture complète où Oracle Database, Grid Infrastructure, ASM, Exadata System Software et les storage cells travaillent ensemble.
 
     Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
 
-    Pour ce module, les notions centrales sont **Physical Disk, Cell Disk, Grid Disk**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
+    Pour ce module, les notions centrales sont **Exadata Database Machine, Workshop d’administration, Système engineered**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
 
     ## 6. Exemple concret
 
-    Une alerte disque apparaît ; il faut comprendre la chaîne physical disk → cell disk → grid disk → ASM avant de décider.
+    Une équipe découvre un rack Exadata après migration et doit comprendre où chercher les informations de base avant de toucher aux bases applicatives.
 
     Dans ce scénario, l’analyse commence par le symptôme métier, puis remonte vers la couche Oracle concernée. Si le sujet touche les I/O, il faut différencier le temps passé dans Oracle Database, les attentes liées aux cells, la distribution ASM et la santé des storage cells. Si le sujet touche la haute disponibilité, il faut distinguer disponibilité locale RAC, continuité de service, sauvegarde et reprise après sinistre.
 
@@ -53,16 +53,16 @@
     Les commandes ci-dessous sont données comme exemples de lecture. Elles doivent être adaptées aux noms de bases, privilèges, versions et conventions du site.
 
     ```bash
-    cellcli -e "list cell detail"
-cellcli -e "list griddisk attributes name,status,asmmodestatus,asmdeactivationoutcome"
-asmcmd lsdg
+    crsctl stat res -t
+srvctl status database -d <db_unique_name> -v
+select instance_name,status,host_name from gv$instance;
     ```
 
     | Élément à lire | Interprétation |
     |---|---|
-    | Physical Disk | Cette information indique comment le mécanisme Physical Disk se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
-| Cell Disk | Cette information indique comment le mécanisme Cell Disk se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
-| Grid Disk | Cette information indique comment le mécanisme Grid Disk se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
+    | Exadata Database Machine | Cette information indique comment le mécanisme Exadata Database Machine se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
+| Workshop d’administration | Cette information indique comment le mécanisme Workshop d’administration se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
+| Système engineered | Cette information indique comment le mécanisme Système engineered se comporte dans un cas réel. Elle doit être lue avec le contexte de charge, de version et d’architecture. |
 
     ## 8. Interprétation des résultats
 
@@ -90,15 +90,15 @@ asmcmd lsdg
 
     ## 11. Exercice pratique
 
-    Vous êtes responsable du sujet **Exadata Storage Server Configuration** sur une plateforme Exadata de formation. À partir du scénario suivant, rédigez une analyse de deux pages :
+    Vous êtes responsable du sujet **Introduction au workshop Exadata** sur une plateforme Exadata de formation. À partir du scénario suivant, rédigez une analyse de deux pages :
 
-    > Une alerte disque apparaît ; il faut comprendre la chaîne physical disk → cell disk → grid disk → ASM avant de décider.
+    > Une équipe découvre un rack Exadata après migration et doit comprendre où chercher les informations de base avant de toucher aux bases applicatives.
 
     Votre réponse doit inclure un schéma simple des composants impliqués, trois commandes ou vues à exécuter, deux métriques à lire, les erreurs à éviter et une recommandation finale.
 
     ## 12. Corrigé de l’exercice
 
-    Une bonne réponse commence par identifier les composants du chapitre : **Physical Disk, Cell Disk, Grid Disk**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
+    Une bonne réponse commence par identifier les composants du chapitre : **Exadata Database Machine, Workshop d’administration, Système engineered**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
     Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
@@ -106,8 +106,8 @@ asmcmd lsdg
 
     ```text
     À retenir
-    - Exadata Storage Server Configuration fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
-    - Les notions centrales du chapitre sont : Physical Disk, Cell Disk, Grid Disk.
+    - Introduction au workshop Exadata fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - Les notions centrales du chapitre sont : Exadata Database Machine, Workshop d’administration, Système engineered.
     - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
     - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
     - Un bon administrateur Exadata relie toujours architecture, workload, métriques et impact métier.
