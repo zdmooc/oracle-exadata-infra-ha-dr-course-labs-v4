@@ -1,0 +1,11 @@
+flowchart TB
+  files[Fichiers sources] --> stage[Staging DBFS/NFS/Object selon site]
+  stage --> method{Méthode}
+  method --> ext[External Table]
+  method --> sqlldr[SQL Loader Direct Path]
+  method --> datapump[Data Pump]
+  ext --> validate[Validation lignes/rejets]
+  sqlldr --> validate
+  datapump --> validate
+  validate --> stats[Stats / Indexes / Contraintes]
+  stats --> promote[Promotion contrôlée]

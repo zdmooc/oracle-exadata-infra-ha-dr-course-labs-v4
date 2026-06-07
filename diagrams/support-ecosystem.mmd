@@ -1,6 +1,9 @@
 flowchart LR
-  Alert[Alert/Incident] --> Collect[AHF Exachk Logs]
-  Collect --> Triage[Triage Severity]
-  Triage --> SR[Oracle Support SR]
-  ASR[ASR when configured] --> SR
-  SR --> RCA[Resolution/RCA]
+  incident[Incident] --> timeline[Timeline + Impact]
+  timeline --> ahf[AHF/Exachk]
+  timeline --> tfa[TFA diagcollect ciblé]
+  timeline --> asr[ASR si configuré]
+  ahf --> sr[Service Request Oracle]
+  tfa --> sr
+  asr --> sr
+  sr --> sanitize[Revue sécurité logs]

@@ -1,34 +1,36 @@
-# Rapport de complétude final
+# Rapport final de complétude V3
 
-Le dépôt a été enrichi pour devenir un support complet de formation **Oracle Exadata Database Machine Administration Workshop** en français, aligné sur les thèmes publics Oracle University et renforcé par une approche infrastructure-first.
+## Synthèse
 
-| Élément demandé | Statut | Commentaire |
-|---|---|---|
-| Modules 00 à 27 | Complet | 28 modules homogènes couvrent le syllabus et les extensions utiles. |
-| Mapping Oracle University | Complet | Voir `docs/04-mapping-syllabus-oracle-university.md`. |
-| Glossaire Exadata | Complet | Voir `docs/05-glossaire-exadata.md`. |
-| Critères de complétude | Complet | Voir `docs/07-criteres-completude.md`. |
-| Labs réels | Complet | 18 labs structurés et orientés preuves read-only. |
-| Templates | Complet | Modèles pour migration, monitoring, support, patching, Bulk Data Loading et Cloud@Customer. |
-| Diagrammes Mermaid | Complet | Architecture, monitoring, migration, bulk loading, patching et support. |
-| Scripts read-only | Complet | Inventaire, cellules, SQL read-only, détection commandes risquées, complétude. |
-| Dépôt tiers séparé | Respecté | `oracle-infra-architecture-ha-dr-labs` est seulement cité comme complément et n’a pas été modifié. |
+La V3 transforme la structure V2 en un cours français beaucoup plus spécifique Exadata. Les contenus génériques récurrents ont été remplacés par des modules orientés preuves, métriques, commandes read-only, labs ciblés et livrables opérationnels. Le dépôt tiers `oracle-infra-architecture-ha-dr-labs` n’a pas été modifié.
 
-## Limites volontaires
+| Élément | Nombre V3 | Attendu |
+|---|---:|---:|
+| Modules | 28 | 28 |
+| Labs | 19 | 19 |
+| Templates / runbooks | 27 | 25+ |
+| Diagrammes Mermaid | 13 | 12+ |
+| Scripts read-only | 9 | 8+ |
+| Glossaire | 1 | 1 |
+| Mapping Oracle University | 1 | 1 |
+| Audit contenu générique | 1 | 1 |
 
-Aucun chiffre de capacité, performance ou SLA non sourcé n’a été inventé. Les commandes dangereuses ne sont pas proposées comme procédure d’exécution ; elles sont mentionnées uniquement comme catégories à surveiller ou à éviter sans validation. Les commandes fournies favorisent l’observation et la collecte de preuves.
+## Modules renforcés en priorité
 
-## Conclusion
+Les modules **08 IORM**, **10 Smart Scan**, **13 Bulk Data Loading**, **14 à 21 Monitoring**, **22 Backup and Recovery**, **23 HA/DR et MAA**, **25 Patching**, **26 Automated Support Ecosystem** et **27 Exadata Cloud Service / Cloud@Customer** ont été enrichis avec métriques, vues, commandes de lecture, labs et livrables spécifiques.
 
-Le dépôt est prêt comme base de cours professionnel. Pour une utilisation en production ou en formation client, il faut adapter les labs à la version Exadata, au modèle matériel ou cloud, aux conventions de sécurité et aux procédures internes.
+## Suppressions et remplacements
 
-## Références officielles
+Les anciens blocs répétitifs de type des commandes système élémentaires répétées sans valeur Exadata utilisés comme contenu principal ont été remplacés par des preuves spécifiques : CellCLI, ASM, CRS, RMAN, Data Guard, DBMS_XPLAN, v$sql, v$sysstat, AHF/TFA/Exachk, EM et OCI CLI selon contexte. Les mini-labs trop similaires ont été remplacés par 19 labs ciblés.
 
-[1]: https://education.oracle.com/exadata-database-machine-administration-workshop/courP_4599 "Oracle University — Exadata Database Machine Administration Workshop"
-[2]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/ "Oracle Exadata Database Machine Documentation"
-[3]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/sagug/ "Oracle Exadata System Software User's Guide"
-[4]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/dbmmn/ "Oracle Exadata Database Machine Maintenance Guide"
-[5]: https://docs.oracle.com/en/database/oracle/oracle-database/ "Oracle Database Documentation"
-[6]: https://www.oracle.com/database/maximum-availability-architecture/ "Oracle Maximum Availability Architecture"
-[7]: https://docs.oracle.com/en/cloud/paas/exadata-cloud/ "Oracle Exadata Cloud Service Documentation"
-[8]: https://docs.oracle.com/en/cloud/cloud-at-customer/exadata-cloud-at-customer/ "Oracle Exadata Cloud@Customer Documentation"
+## Limites restantes
+
+Ce dépôt ne remplace pas un accès réel à une machine Exadata, à Oracle University, ni à My Oracle Support. Certaines commandes dépendent de privilèges, licences, version Exadata, modèle on-prem/cloud et politique interne. Les seuils de performance ne sont pas inventés et doivent être calibrés sur l’environnement réel.
+
+## Score de complétude réaliste
+
+Le score de complétude pédagogique et documentaire est estimé à **92 %**. Le support est exploitable pour une formation complète, mais une relecture par un expert disposant d’un Exadata réel et des versions exactes cible reste recommandée avant usage production.
+
+## Recommandations finales
+
+Utiliser ce dépôt comme base de cours, faire exécuter les labs en lecture seule sur environnement de formation, faire valider les runbooks de patching/support par les procédures internes, et maintenir le mapping Oracle University à chaque évolution du syllabus public.

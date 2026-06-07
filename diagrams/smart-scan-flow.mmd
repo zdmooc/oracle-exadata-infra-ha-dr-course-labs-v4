@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant SQL as SQL Engine
+  participant ASM as ASM
+  participant CELL as Storage Cell
+  participant DB as DB Server
+  SQL->>ASM: Full scan/direct path éligible
+  ASM->>CELL: Demande blocs et prédicats
+  CELL->>CELL: Predicate filtering + column projection
+  CELL->>CELL: Storage Index / HCC si applicable
+  CELL-->>DB: Seulement les lignes/colonnes utiles
+  DB-->>SQL: Résultat final

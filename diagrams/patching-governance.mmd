@@ -1,7 +1,0 @@
-flowchart TD
-  Pre[Prechecks: health backup versions] --> CAB[Change Approval]
-  CAB --> Window[Maintenance Window]
-  Window --> Execute[Oracle documented patch procedure]
-  Execute --> Post[Postchecks]
-  Post --> Close[Closure and Evidence]
-  Execute --> Rollback[Rollback if required]

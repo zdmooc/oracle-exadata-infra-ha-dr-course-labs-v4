@@ -1,0 +1,11 @@
+flowchart LR
+  source[Source DB] --> assess[Assessment version/volume/downtime]
+  assess --> dp[Data Pump]
+  assess --> rman[RMAN Duplicate]
+  assess --> tts[TTS/XTTS]
+  assess --> dg[Data Guard / GoldenGate / ZDM]
+  dp --> validate[Validation technique et métier]
+  rman --> validate
+  tts --> validate
+  dg --> validate
+  validate --> cutover[Cutover + fallback]

@@ -1,0 +1,10 @@
+flowchart LR
+  subgraph Rack Exadata
+    db[DB Servers RAC]
+    sw[Switches / Fabric]
+    cells[Storage Cells]
+    pdu[PDU / ILOM / Hardware]
+  end
+  db <--> sw <--> cells
+  pdu -.monitoring.-> db
+  pdu -.monitoring.-> cells

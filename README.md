@@ -1,69 +1,63 @@
-# Oracle Exadata Database Machine Administration Workshop — Cours complet FR
+# Oracle Exadata Infrastructure HA/DR Course Labs — V3 française
 
-**Auteur pédagogique : Zidane Djamal A**  
-**Rôle : Architecte Oracle Infrastructure, HA/DR et formateur technique**  
-**Dépôt cible : `zdmooc/oracle-exadata-infra-ha-dr-course-labs`**
+Ce dépôt fournit un support de formation complet en français pour **Oracle Exadata Database Machine Administration Workshop**, avec une approche **infrastructure-first**, des modules techniques, des labs ciblés, des templates opérationnels, des diagrammes Mermaid, des runbooks et des scripts read-only.
 
-Ce dépôt constitue un support de formation complet en français autour d’**Oracle Exadata Database Machine Administration Workshop**. Il est aligné sur les thèmes publiés par Oracle University pour le cours officiel et enrichi par une approche **infrastructure-first** : architecture, site planning, OEDA/OECA, storage/ASM, IORM, performance, Smart Scan, migration, Bulk Data Loading, monitoring détaillé, sauvegarde, HA/DR, patching, Automated Support Ecosystem, Exadata Cloud Service et Cloud@Customer [1].
+Le dépôt tiers `https://github.com/zdmooc/oracle-infra-architecture-ha-dr-labs` reste séparé. Il peut être cité comme complément d’architecture, mais il n’est ni fusionné ni modifié par ce dépôt.
 
-> Ce dépôt est un support pédagogique indépendant. Il ne remplace ni Oracle University, ni la documentation Oracle, ni les procédures validées d’une organisation. Les commandes fournies sont majoritairement des commandes de **lecture non destructives**. Toute action de patching, modification, suppression, redémarrage ou reconfiguration doit être traitée comme risquée et validée dans un environnement de test.
+## Public visé
 
-## Structure du dépôt
+Ce cours s’adresse aux DBA Oracle confirmés, administrateurs Linux/Unix, architectes infrastructure, consultants Oracle, ingénieurs cloud/Exadata Cloud@Customer et équipes exploitation/support.
 
-| Dossier | Contenu |
-|---|---|
-| `modules/` | 28 modules numérotés de `00` à `27`, chacun avec objectifs, concepts, architecture, commandes read-only, bonnes pratiques, mini-lab et validation. |
-| `labs/` | Travaux pratiques complets avec objectif, prérequis, contexte, commandes indicatives, résultat attendu, validation, nettoyage, risques et livrable. |
-| `docs/` | Mapping Oracle University, glossaire Exadata, critères de complétude, rapport final, références et rôle auteur. |
-| `templates/` | Modèles opérationnels : site planning, migration, Bulk Data Loading, monitoring, patching, SR support, Cloud@Customer. |
-| `diagrams/` | Diagrammes Mermaid couvrant architecture, monitoring, migration, patching, support et cloud. |
-| `scripts/` | Scripts d’exemple read-only pour collecter inventaire, versions, métriques et rapports sans modification. |
+## Modules
 
-## Modules du cours
+| Module | Titre | Alignement Oracle University |
+|---|---|---|
+| 00 | [Introduction](modules/00-introduction.md) | Introduction |
+| 01 | [Overview](modules/01-overview.md) | Overview |
+| 02 | [Architecture](modules/02-architecture.md) | Architecture |
+| 03 | [Key Capabilities](modules/03-key-capabilities.md) | Key Capabilities |
+| 04 | [Site planning et intégration datacenter](modules/04-site-planning-et-integration-datacenter.md) | Initial Configuration |
+| 05 | [Initial Configuration](modules/05-initial-configuration.md) | Initial Configuration |
+| 06 | [Exadata Storage Server Configuration](modules/06-exadata-storage-server-configuration.md) | Exadata Storage Server Configuration |
+| 07 | [ASM et modèle de stockage](modules/07-asm-et-modele-de-stockage.md) | Exadata Storage Server Configuration |
+| 08 | [IORM](modules/08-iorm.md) | IORM |
+| 09 | [Performance Recommendations](modules/09-performance-recommendations.md) | Performance Recommendations |
+| 10 | [Smart Scan](modules/10-smart-scan.md) | Smart Scan |
+| 11 | [Consolidation](modules/11-consolidation.md) | Consolidation |
+| 12 | [Migration to Exadata](modules/12-migration-to-exadata.md) | Migration to Exadata |
+| 13 | [Bulk Data Loading](modules/13-bulk-data-loading.md) | Bulk Data Loading |
+| 14 | [Platform Monitoring Introduction](modules/14-platform-monitoring-introduction.md) | Platform Monitoring |
+| 15 | [Monitoring Exadata System Software](modules/15-monitoring-exadata-system-software.md) | Monitoring Exadata System Software |
+| 16 | [Enterprise Manager Cloud Control](modules/16-enterprise-manager-cloud-control.md) | Enterprise Manager Cloud Control |
+| 17 | [Monitoring Storage Servers](modules/17-monitoring-storage-servers.md) | Monitoring Storage Servers |
+| 18 | [Monitoring Database Servers](modules/18-monitoring-database-servers.md) | Monitoring DB Servers |
+| 19 | [Monitoring Network](modules/19-monitoring-network.md) | Monitoring Other Components |
+| 20 | [Monitoring Other Components](modules/20-monitoring-other-components.md) | Monitoring Other Components |
+| 21 | [Other Monitoring Tools](modules/21-other-monitoring-tools.md) | Other Monitoring Tools |
+| 22 | [Backup and Recovery](modules/22-backup-and-recovery.md) | Backup and Recovery |
+| 23 | [HA/DR et MAA](modules/23-ha-dr-et-maa.md) | Backup and Recovery |
+| 24 | [Maintenance Tasks](modules/24-maintenance-tasks.md) | Maintenance Tasks |
+| 25 | [Patching](modules/25-patching.md) | Patching |
+| 26 | [Automated Support Ecosystem](modules/26-automated-support-ecosystem.md) | Automated Support Ecosystem |
+| 27 | [Exadata Cloud Service et Cloud@Customer](modules/27-exadata-cloud-service-et-cloud-customer.md) | Exadata Cloud Service / Cloud@Customer |
 
-| Module | Sujet |
-|---:|---|
-| 00 | [Introduction](modules/00-introduction.md) |
-| 01 | [Overview](modules/01-overview.md) |
-| 02 | [Architecture](modules/02-architecture.md) |
-| 03 | [Key Capabilities](modules/03-key-capabilities.md) |
-| 04 | [Site Planning et intégration datacenter](modules/04-site-planning-et-intégration-datacenter.md) |
-| 05 | [Initial Configuration](modules/05-initial-configuration.md) |
-| 06 | [Storage Server Configuration](modules/06-storage-server-configuration.md) |
-| 07 | [ASM et modèle de stockage](modules/07-asm-et-modèle-de-stockage.md) |
-| 08 | [IORM](modules/08-iorm.md) |
-| 09 | [Performance Recommendations](modules/09-performance-recommendations.md) |
-| 10 | [Smart Scan](modules/10-smart-scan.md) |
-| 11 | [Consolidation](modules/11-consolidation.md) |
-| 12 | [Migration to Exadata](modules/12-migration-to-exadata.md) |
-| 13 | [Bulk Data Loading](modules/13-bulk-data-loading.md) |
-| 14 | [Platform Monitoring](modules/14-platform-monitoring.md) |
-| 15 | [Monitoring Exadata System Software](modules/15-monitoring-exadata-system-software.md) |
-| 16 | [Enterprise Manager Cloud Control](modules/16-enterprise-manager-cloud-control.md) |
-| 17 | [Monitoring Storage Servers](modules/17-monitoring-storage-servers.md) |
-| 18 | [Monitoring DB Servers](modules/18-monitoring-db-servers.md) |
-| 19 | [Monitoring Network](modules/19-monitoring-network.md) |
-| 20 | [Monitoring Other Components](modules/20-monitoring-other-components.md) |
-| 21 | [Other Monitoring Tools](modules/21-other-monitoring-tools.md) |
-| 22 | [Backup and Recovery](modules/22-backup-and-recovery.md) |
-| 23 | [HA/DR et MAA](modules/23-ha-dr-et-maa.md) |
-| 24 | [Maintenance Tasks](modules/24-maintenance-tasks.md) |
-| 25 | [Patching](modules/25-patching.md) |
-| 26 | [Automated Support Ecosystem](modules/26-automated-support-ecosystem.md) |
-| 27 | [Exadata Cloud Service et Cloud@Customer](modules/27-exadata-cloud-service-et-cloud-customer.md) |
+## Labs, templates, diagrammes et scripts
 
+| Type | Contenu V3 |
+|---|---:|
+| Modules | 28 |
+| Labs ciblés | 19 |
+| Templates / runbooks | 27 |
+| Diagrammes Mermaid | 13 |
+| Scripts read-only | 9 |
 
-## Dépôt complémentaire séparé
+## Contrôle qualité
 
-Le dépôt `https://github.com/zdmooc/oracle-infra-architecture-ha-dr-labs` reste un référentiel tiers séparé. Il peut être cité comme complément architecture/HA/DR, mais il n’est pas modifié par ce cours.
+Exécuter localement :
 
-## Références officielles
+```bash
+bash scripts/completeness-check.sh
+bash scripts/dangerous-command-detector.sh
+```
 
-[1]: https://education.oracle.com/exadata-database-machine-administration-workshop/courP_4599 "Oracle University — Exadata Database Machine Administration Workshop"
-[2]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/ "Oracle Exadata Database Machine Documentation"
-[3]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/sagug/ "Oracle Exadata System Software User's Guide"
-[4]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/dbmmn/ "Oracle Exadata Database Machine Maintenance Guide"
-[5]: https://docs.oracle.com/en/database/oracle/oracle-database/ "Oracle Database Documentation"
-[6]: https://www.oracle.com/database/maximum-availability-architecture/ "Oracle Maximum Availability Architecture"
-[7]: https://docs.oracle.com/en/cloud/paas/exadata-cloud/ "Oracle Exadata Cloud Service Documentation"
-[8]: https://docs.oracle.com/en/cloud/cloud-at-customer/exadata-cloud-at-customer/ "Oracle Exadata Cloud@Customer Documentation"
+Les rapports principaux sont disponibles dans `docs/04-mapping-syllabus-oracle-university.md`, `docs/05-glossaire-exadata.md`, `docs/98-audit-contenu-generique.md` et `docs/99-rapport-completude-final.md`.

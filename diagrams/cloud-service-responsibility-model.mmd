@@ -1,0 +1,7 @@
+flowchart TB
+  op[Opérations Exadata] --> onprem[On-premises: client responsable large]
+  op --> exacs[Exadata Cloud Service: responsabilité partagée OCI]
+  op --> excac[Cloud@Customer: cloud managé chez client]
+  exacs --> iam[IAM / Réseau / DB Ops]
+  excac --> raci[Matrice RACI Oracle / Client]
+  onprem --> full[Datacenter + OS + DB + Support selon contrat]

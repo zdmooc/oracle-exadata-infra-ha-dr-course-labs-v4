@@ -1,7 +1,0 @@
-flowchart TB
-    ADMIN[Admin Network] --> DBN[Database Nodes]
-    ADMIN --> CELLS[Storage Cells]
-    CLIENT[Client Network] --> SCAN[SCAN VIPs]
-    BACKUP[Backup Network] --> BACKUPTARGET[Backup Appliance / Object Storage]
-    PRIVATE[RoCE/InfiniBand Private Fabric] --> DBN
-    PRIVATE --> CELLS

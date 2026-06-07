@@ -1,0 +1,7 @@
+flowchart TB
+  pre[Pré-check: backup, Data Guard, Exachk, versions] --> cab[Go/No-Go CAB]
+  cab --> exec[Exécution patch selon couche: DB/GI/OS/Exadata]
+  exec --> post[Post-check: CRS, services, versions, Exachk]
+  post --> decision{Conforme ?}
+  decision -- Oui --> close[Clôture et rapport]
+  decision -- Non --> rollback[Rollback / Support Oracle]

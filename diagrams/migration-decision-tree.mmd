@@ -1,8 +1,0 @@
-flowchart TD
-  Start[Migration Need] --> Downtime{Downtime acceptable?}
-  Downtime -->|Low| DG[Data Guard/ZDM/GoldenGate]
-  Downtime -->|Moderate| RMAN[RMAN Duplicate/Restore]
-  Downtime -->|Object scope| TTS[TTS/Data Pump]
-  DG --> Validate[Validation and Rollback Plan]
-  RMAN --> Validate
-  TTS --> Validate

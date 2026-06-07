@@ -1,0 +1,6 @@
+flowchart LR
+  primary[Exadata Primary RAC] --> rman[RMAN Backups FRA/ZDLRA/Media]
+  primary --> dg[Data Guard Transport]
+  dg --> standby[Standby Exadata / DR Site]
+  rman --> restore[Restore / Recovery Validation]
+  standby --> sw[Switchover / Failover Runbook]

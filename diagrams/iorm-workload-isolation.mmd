@@ -1,0 +1,7 @@
+flowchart TB
+  oltp[OLTP critique] --> iorm[IORM Plan]
+  report[Reporting] --> iorm
+  batch[Batch] --> iorm
+  backup[Sauvegarde] --> iorm
+  iorm --> cells[Storage Cells]
+  cells --> metrics[Métriques latence / throughput / attente]

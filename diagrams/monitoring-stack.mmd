@@ -1,7 +1,10 @@
-flowchart LR
-  CellCLI --> Evidence[Evidence Repository]
-  AHF --> Evidence
-  Exachk --> Evidence
-  EM[Enterprise Manager] --> Dashboard[Ops Dashboard]
-  OSW[OSWatcher/OS tools] --> Evidence
-  DBViews[DB/GV$ Views] --> Evidence
+flowchart TB
+  em[Enterprise Manager] --> targets[Targets DB/ASM/Cell/Rack]
+  ahf[AHF Exachk TFA] --> evidence[Evidence Bundle]
+  awr[AWR/ASH/SQL Monitor] --> dbperf[Performance DB]
+  cell[CellCLI metrichistory alerthistory] --> storage[Storage Monitoring]
+  os[OSWatcher / OS stats] --> host[DB Server Health]
+  storage --> timeline[Timeline incident]
+  dbperf --> timeline
+  host --> timeline
+  evidence --> timeline

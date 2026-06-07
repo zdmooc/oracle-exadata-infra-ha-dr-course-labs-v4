@@ -1,0 +1,14 @@
+flowchart TB
+  app[Applications] --> scan[SCAN / Services RAC]
+  scan --> db1[DB Server 1]
+  scan --> db2[DB Server 2]
+  db1 --> gi[Grid Infrastructure / ASM]
+  db2 --> gi
+  gi --> fabric[Fabric privé RoCE ou InfiniBand]
+  fabric --> cell1[Storage Cell 1]
+  fabric --> cell2[Storage Cell 2]
+  fabric --> cell3[Storage Cell N]
+  cell1 --> flash[Flash Cache / Flash Log]
+  cell1 --> disks[Physical Disks]
+  support[AHF / Exachk / TFA / EM] -.observe.-> db1
+  support -.observe.-> cell1

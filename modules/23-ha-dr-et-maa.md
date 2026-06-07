@@ -1,115 +1,127 @@
-# Module 23 — HA/DR et MAA
+    # Module 23 — HA/DR et MAA
 
-**Alignement Oracle University :** Extension infrastructure-first : haute disponibilité, Data Guard, RAC, MAA..  
-**Auteur pédagogique :** Zidane Djamal A.  
-**Positionnement :** cours français indépendant, infrastructure-first, aligné sur les thèmes publiés du workshop Oracle University [1].
+    ## Objectif du module
 
-## Objectifs
+    Ce module permet de maîtriser **HA locale RAC, DR Data Guard, Broker, switchover, failover, reinstate, RPO/RTO et MAA**. À la fin du module, l’apprenant doit savoir expliquer le sujet, identifier les composants Exadata concernés, collecter des preuves en lecture seule et produire un livrable exploitable par une équipe DBA, infrastructure, support ou cloud.
 
-À la fin de ce module, l’apprenant doit pouvoir expliquer le périmètre **HA/DR et MAA**, le relier aux composants Exadata concernés, identifier les commandes de lecture utiles, formuler les risques principaux et produire un livrable d’exploitation vérifiable.
+    ## Alignement avec le cours officiel
 
-| Objectif | Résultat attendu |
-|---|---|
-| Comprendre le thème | L’apprenant décrit les composants, services ou pratiques concernés sans confondre base, serveur DB, cellule storage et réseau. |
-| Lire l’état courant | L’apprenant collecte des preuves non destructives et sait les classer. |
-| Détecter les risques | L’apprenant repère les erreurs fréquentes, lacunes de supervision et dépendances opérationnelles. |
-| Produire un livrable | L’apprenant remet une fiche de synthèse utilisable par une équipe DBA/infra. |
+    Ce module couvre le thème Oracle University **Backup and Recovery** du parcours **Exadata Database Machine Administration Workshop**. Il enrichit le thème avec une approche infrastructure-first, des commandes non destructives, des métriques observables et un mini-lab ciblé.
 
-## Concepts
+    ## Concepts clés
 
-Exadata s’intègre naturellement aux architectures Oracle MAA avec RAC, ASM, Data Guard, sauvegarde, monitoring et procédures de bascule. Ce module complète le workshop administration par une lecture architecture HA/DR adaptée aux responsables infrastructure [6].
+    | Concept | Explication opérationnelle |
+    |---|---|
+    | **RAC HA** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+| **Data Guard DR** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+| **Broker** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+| **switchover** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+| **failover** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+| **reinstate** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+| **transport lag** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+| **apply lag** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
+| **MAA** | Élément à maîtriser dans ce module ; l’apprenant doit savoir le reconnaître, le relier à la couche Exadata concernée et produire une preuve observable. |
 
-Dans ce cours, le terme **infrastructure-first** signifie que chaque sujet est traité depuis les couches physiques et opérationnelles vers les services Oracle Database. Cette approche évite de réduire Exadata à une base de données rapide : elle met en relation datacenter, réseau, compute, storage, ASM, Clusterware, supervision, support, sécurité et continuité.
+    ## Architecture concernée
 
-## Architecture concernée
+    RAC fournit HA locale au sein de la plateforme ; Data Guard apporte DR distante. Broker orchestre rôles et transitions. MAA structure les niveaux de disponibilité.
 
-| Couche | Éléments à observer | Pourquoi c’est important |
-|---|---|---|
-| Datacenter | Rack, alimentation, câblage, accès management | Les incidents physiques et les erreurs de câblage peuvent produire des symptômes applicatifs. |
-| Réseau | Client, backup, management, interconnexion interne | Les chemins réseau conditionnent migration, backup, supervision et latence. |
-| Compute | Serveurs DB, OS, Grid Infrastructure, ASM, Oracle Database | Les bases s’appuient sur cette couche pour RAC, services, listeners et accès aux diskgroups. |
-| Storage | Cellules, cell disks, grid disks, flash, alertes | Les optimisations Exadata et la résilience ASM dépendent de cette couche. |
-| Exploitation | Monitoring, patching, support, runbooks | La qualité opérationnelle réduit le temps de diagnostic et le risque de changement. |
+    | Couche | Rôle dans ce module | Preuve typique |
+    |---|---|---|
+    | DB servers | Hébergent les instances, services, agents et outils Oracle. | `crsctl`, `srvctl`, vues `v$`/`gv$` si pertinent. |
+    | Storage cells | Fournissent stockage intelligent, flash, offload, métriques et alertes. | `cellcli list ...` en lecture seule. |
+    | ASM / Grid Infrastructure | Assure cluster, diskgroups, services et accès au stockage. | `asmcmd`, `crsctl`, vues ASM. |
+    | Réseau Exadata | Transporte client, backup, administration et trafic privé. | Statistiques interfaces, routage, état fabric. |
+    | Outils support | AHF, Exachk, TFA, EM selon le module. | Rapports santé, bundles, incidents, métriques. |
 
-## Explications détaillées
+    ## Fonctionnement détaillé
 
-Le module doit être travaillé avec un environnement de formation, une documentation de version et des accès en lecture. Les commandes proposées ci-dessous servent à **observer**. Elles ne modifient pas la configuration, ne redémarrent aucun service, ne suppriment aucun objet et ne changent aucun paramètre. Les actions de correction, patching, reconfiguration ou suppression doivent toujours être traitées dans un runbook approuvé.
+    Le sujet doit être analysé par couches. L’approche recommandée consiste à formuler un symptôme, localiser la couche suspecte, collecter des preuves minimales, interpréter ces preuves, puis décider d’une action prudente. Le support ne propose pas de modification destructive par défaut. Toute action de changement, de patching, de redémarrage, de mise hors ligne ou de suppression doit être traitée dans un runbook validé et explicitement signalée comme risquée.
 
-## Commandes de lecture non destructives
+    Pour ce module, l’analyse doit rester spécifique à **HA/DR et MAA**. Les preuves attendues ne sont pas un simple inventaire système ; elles doivent démontrer la compréhension du mécanisme Exadata concerné, de ses dépendances et de ses limites.
 
-```bash
-# Lecture seule : hostname -f
-# Lecture seule : date
-# Lecture seule : uname -a
-# Lecture seule : df -h
-# Lecture seule : ip -br addr
-# Lecture seule : srvctl status database -v
-# Lecture seule : crsctl stat res -t
-# Lecture seule : asmcmd lsdg
-# Lecture seule : sqlplus -L / as sysdba
-# Lecture seule : select name, open_mode, database_role from v$database;
-# Lecture seule : select inst_id, instance_name, status from gv$instance;
-```
+    ## Commandes et vues utiles en lecture
 
-> **Attention :** certaines commandes comme `sqlplus / as sysdba`, `cellcli`, `dcli`, `crsctl` ou `srvctl` peuvent nécessiter des privilèges élevés. Dans ce cours, elles sont utilisées uniquement pour lire l’état. Toute commande avec `modify`, `alter`, `drop`, `delete`, `restart`, `shutdown`, `startup`, `patch`, `apply` ou `rebalance` doit être considérée comme potentiellement risquée.
+    Les commandes suivantes sont fournies comme exemples de lecture. Elles doivent être adaptées à la version, aux privilèges et aux standards de l’environnement. Les commandes nécessitant des privilèges élevés sont indiquées en commentaire lorsqu’elles peuvent varier selon site.
 
-## Points de vigilance
+    ```bash
+    select database_role,open_mode,protection_mode,switchover_status from v$database;
+select name,value,time_computed from v$dataguard_stats;
+dgmgrl / "show configuration"  # lecture Broker si configuré
+srvctl status database -d <db_unique_name>
+    ```
 
-| Point | Vigilance opérationnelle |
-|---|---|
-| Version | Toujours rattacher une observation à une version Exadata System Software, Grid Infrastructure et Oracle Database. |
-| Portée | Distinguer lecture locale, lecture cellule, lecture cluster et lecture base. |
-| Horodatage | Horodater les collectes pour comparer avant/après incident ou changement. |
-| Privilèges | Utiliser le moindre privilège compatible avec la collecte demandée. |
-| Production | Ne jamais transformer un lab en procédure production sans validation interne et documentation Oracle de version. |
+    ## Métriques à analyser
 
-## Erreurs fréquentes
+    | Métrique ou preuve | Interprétation prudente |
+    |---|---|
+    | transport lag | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
+| apply lag | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
+| switchover_status | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
+| protection mode | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
+| services RAC | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
+| RPO/RTO cible | À comparer avec la période, le workload et la couche concernée ; aucun seuil universel n’est inventé dans ce support. |
 
-| Erreur | Impact | Prévention |
-|---|---|---|
-| Confondre cellule storage et serveur DB | Mauvais diagnostic et escalade retardée | Toujours indiquer la couche concernée. |
-| Collecter sans contexte | Données difficiles à interpréter | Ajouter date, hôte, rôle, version et symptôme. |
-| Appliquer une commande trouvée en ligne | Risque de changement non maîtrisé | Privilégier la documentation Oracle et les runbooks validés. |
-| Ignorer le réseau | Symptômes de performance mal attribués | Inclure réseau client, backup, management et interne dans l’analyse. |
+    ## Exemple d’analyse
 
-## Bonnes pratiques
+    **Symptôme.** Décider si RAC suffit ou si Data Guard est nécessaire. L’équipe relie panne locale, panne site, RPO/RTO et procédure switchover.
 
-L’équipe doit maintenir un inventaire vivant, une matrice réseau, une cartographie des responsabilités, un calendrier de maintenance, des preuves de sauvegarde, un historique de patching, des modèles de SR support et des procédures de validation après changement. Les preuves doivent être stockées dans un espace d’exploitation contrôlé avec nommage stable.
+    **Couche suspecte.** La couche doit être choisie à partir du symptôme : base, ASM, storage cell, réseau, monitoring, sauvegarde, support ou cloud. L’analyse ne doit pas supposer la cause avant collecte.
 
-## Mini-lab
+    **Preuves à collecter.** Les preuves minimales sont les commandes et vues listées plus haut, complétées par l’heure de début, l’impact métier, le périmètre touché et l’état avant/après si disponible.
 
-| Étape | Action | Résultat attendu |
-|---:|---|---|
-| 1 | Identifier les hôtes et rôles concernés par le thème. | Liste des serveurs DB, cellules ou composants supervisés. |
-| 2 | Exécuter uniquement les commandes de lecture adaptées à votre environnement. | Fichiers de sortie horodatés. |
-| 3 | Classer les informations par couche : compute, storage, réseau, base, support. | Tableau de synthèse clair. |
-| 4 | Comparer avec les attentes du module. | Écarts, risques et questions ouvertes. |
+    **Interprétation.** Les résultats sont comparés avec un état de référence connu, une période équivalente ou les recommandations Oracle applicables. Le support évite d’inventer des seuils universels.
 
-## Questions de validation
+    **Prochaine action prudente.** Si l’action dépasse la lecture, produire un runbook, obtenir validation CAB ou support, et documenter rollback, impact et communication.
 
-| Question | Critère de bonne réponse |
-|---|---|
-| Quelle couche Exadata est principalement concernée par ce module ? | La réponse distingue compute, storage, réseau, base et exploitation. |
-| Quelles preuves collecter avant d’ouvrir un incident ? | La réponse inclut symptômes, horodatage, versions, logs ou métriques. |
-| Quelle commande serait risquée dans ce contexte ? | La réponse identifie les verbes de modification et propose une alternative de lecture. |
-| Quel livrable remettre à une équipe d’exploitation ? | La réponse propose une fiche structurée, vérifiable et exploitable. |
+    ## Erreurs fréquentes
 
-## Livrables attendus
+    | Erreur spécifique | Correction recommandée |
+    |---|---|
+    | confondre HA locale et DR | Produire une preuve, relire le runbook et escalader si l’action dépasse la lecture. |
+| faire failover sans Go formel | Produire une preuve, relire le runbook et escalader si l’action dépasse la lecture. |
+| oublier reinstate | Produire une preuve, relire le runbook et escalader si l’action dépasse la lecture. |
+| ne pas tester services après switchover | Produire une preuve, relire le runbook et escalader si l’action dépasse la lecture. |
 
-| Livrable | Format recommandé |
-|---|---|
-| Note de synthèse du module | Markdown ou document interne. |
-| Sorties de commandes | Fichiers texte horodatés, sans secret. |
-| Tableau de risques | Liste des écarts, sévérité, propriétaire, action. |
-| Questions restantes | Liste transmise au formateur ou à l’équipe référente. |
+    ## Bonnes pratiques
+
+    | Bonne pratique | Mise en œuvre |
+    |---|---|
+    | runbook switchover testé | À intégrer dans le livrable du module. |
+| Broker documenté | À intégrer dans le livrable du module. |
+| services adaptés aux rôles | À intégrer dans le livrable du module. |
+
+    ## Mini-lab ciblé
+
+    **Objectif.** Concevoir une architecture HA/DR Exadata avec RPO/RTO, Data Guard et procédure de bascule.
+
+    **Étapes.** L’apprenant prépare un dossier de travail, exécute uniquement les commandes read-only adaptées à son environnement, capture les sorties horodatées, interprète les métriques propres au module et rédige une conclusion. Aucune commande de suppression, redémarrage, patching, offline/drop ou modification de paramètre n’est autorisée dans ce mini-lab.
+
+    **Résultat attendu.** Le résultat doit relier un symptôme ou un objectif pédagogique à des preuves Exadata spécifiques, et non à un simple inventaire générique.
+
+    ## Questions de validation
+
+    1. Quand RAC ne suffit-il pas ?
+2. Quelle différence entre switchover et failover ?
+
+    ## Livrables attendus
+
+    Dossier HA/DR MAA.
+
+
+## Diagrammes associés
+
+- [`backup-recovery-dataguard.mmd`](../diagrams/backup-recovery-dataguard.mmd)
 
 ## Références officielles
 
-[1]: https://education.oracle.com/exadata-database-machine-administration-workshop/courP_4599 "Oracle University — Exadata Database Machine Administration Workshop"
-[2]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/ "Oracle Exadata Database Machine Documentation"
-[3]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/sagug/ "Oracle Exadata System Software User's Guide"
-[4]: https://docs.oracle.com/en/engineered-systems/exadata-database-machine/dbmmn/ "Oracle Exadata Database Machine Maintenance Guide"
-[5]: https://docs.oracle.com/en/database/oracle/oracle-database/ "Oracle Database Documentation"
-[6]: https://www.oracle.com/database/maximum-availability-architecture/ "Oracle Maximum Availability Architecture"
-[7]: https://docs.oracle.com/en/cloud/paas/exadata-cloud/ "Oracle Exadata Cloud Service Documentation"
-[8]: https://docs.oracle.com/en/cloud/cloud-at-customer/exadata-cloud-at-customer/ "Oracle Exadata Cloud@Customer Documentation"
+Les références ci-dessous doivent être utilisées comme point d'entrée, puis ajustées selon la génération Exadata, la version Oracle Database et le modèle de service utilisé.
+
+| Référence | Usage |
+|---|---|
+| [Oracle University — Exadata Database Machine Administration Workshop](https://education.oracle.com/exadata-database-machine-administration-workshop/courP_4599) | Alignement pédagogique du workshop. |
+| [Oracle Exadata System Software Documentation](https://docs.oracle.com/en/engineered-systems/exadata-database-machine/) | Administration Exadata, Storage Server, outils et maintenance. |
+| [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | HA/DR, Data Guard, sauvegarde, meilleures pratiques. |
+| [Oracle Database Backup and Recovery User's Guide](https://docs.oracle.com/en/database/) | RMAN, restauration, récupération et validation. |
+| [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, ORAchk, Exachk et TFA. |
+

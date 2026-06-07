@@ -1,0 +1,10 @@
+flowchart TB
+  users[Clients] --> client[Client Network]
+  admins[Admins] --> admin[Admin Network]
+  backup[Backup Network] --> media[Backup / ZDLRA / NFS selon site]
+  db[DB Servers] <--> private[Private Fabric RoCE/InfiniBand]
+  private <--> cells[Storage Cells]
+  client --> db
+  admin --> db
+  admin --> cells
+  db --> backup
