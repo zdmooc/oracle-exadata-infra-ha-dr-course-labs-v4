@@ -8,7 +8,7 @@
 
     Les DB servers hébergent la partie visible par les applications. Leur santé dépend de GI, ASM, OS, services, listeners et instances.
 
-    Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
+    . Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
     ## 3. Concepts clés expliqués
 
@@ -38,7 +38,7 @@
 
     Les DB servers hébergent la partie visible par les applications. Leur santé dépend de GI, ASM, OS, services, listeners et instances.
 
-    Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
+    . Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
 
     Pour ce module, les notions centrales sont **CRS Resource, GV$INSTANCE, Service placement**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
 
@@ -100,13 +100,13 @@ tfactl print status
 
     Une bonne réponse commence par identifier les composants du chapitre : **CRS Resource, GV$INSTANCE, Service placement**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
-    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
+    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance.  : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
     ## 13. Synthèse à retenir
 
     ```text
     À retenir
-    - Monitoring Database Servers fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - Monitoring Database Servers  : base, cluster, ASM, storage cells, réseau et outils Oracle.
     - Les notions centrales du chapitre sont : CRS Resource, GV$INSTANCE, Service placement.
     - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
     - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
@@ -123,4 +123,77 @@ tfactl print status
 | [Oracle Database Documentation](https://docs.oracle.com/en/database/) | Vues dynamiques, SQL, RMAN, Data Guard, AWR/ASH selon licences. |
 | [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | Principes HA/DR, Data Guard, sauvegarde et continuité de service. |
 | [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, Exachk, ORAchk, TFA et diagnostics automatisés. |
+## Complément expert V5 — Monitoring des database servers
 
+### Explication technique spécifique
+
+Le monitoring Exadata ne consiste pas à regarder une seule alerte ou un seul graphe. Pour **les database servers**, l’objectif est de rapprocher l’état matériel, l’état logiciel, les métriques courantes et la perception côté base. Une alerte cellule peut être bénigne si elle correspond à une transition attendue, mais elle peut aussi expliquer une hausse de latence observée par les sessions Oracle. La démarche experte consiste à identifier la mesure native, son objet, son horodatage, puis à la comparer avec les waits, les statistiques SQL et l’état ASM. Enterprise Manager apporte une vision centralisée, tandis que `cellcli`, les vues dynamiques et les journaux de diagnostic donnent une preuve locale.[^v5-monitoring]
+
+Pour ce thème, un DBA confirmé doit distinguer **symptôme**, **cause probable** et **preuve observable**. Le symptôme typique est : une instance RAC montre plus de waits que les autres. La cause peut être locale au composant, liée à une saturation, à une opération planifiée ou à une panne partielle. La preuve doit venir d’au moins deux sources indépendantes : métrique cellule et vue base, alerte système et historique Enterprise Manager, ou état ASM et journal Exadata.
+
+| Indicateur | Ce qu’il mesure | Interprétation experte |
+|---|---|---|
+| `CPU usage` | CPU hôte ou instance | Distingue saturation CPU et attente I/O |
+| `gc waits` | Attentes Global Cache | Indique contention RAC ou interconnect |
+| `cell waits` | Attentes liées aux cellules | Relie instance et stockage Exadata |
+
+```mermaid
+flowchart LR
+    SVC[Services applicatifs] --> I1[Instance 1]
+    SVC --> I2[Instance 2]
+    I1 --> CPU1[CPU / mémoire host]
+    I2 --> CPU2[CPU / mémoire host]
+    I1 --> GC[Global Cache]
+    I1 --> CELL[Storage Cells]
+```
+
+### Exemple concret réaliste
+
+Pendant une fenêtre de reporting, l’équipe observe une instance RAC montre plus de waits que les autres. Le réflexe débutant serait de conclure à un problème général de performance. L’analyse V5 impose plutôt de vérifier si l’événement est isolé à une cellule, à un database server, à un réseau ou à une base. Si une seule cellule montre une métrique anormale alors que les autres restent stables, la piste est locale. Si toutes les cellules montrent la même hausse au même instant, il faut chercher une opération globale : chargement massif, backup, rebalance ASM, scan parallèle ou patching.
+
+### Comment raisonner
+
+Commence par fixer la période exacte de l’incident, puis compare trois horloges : heure applicative, heure base et heure composant Exadata. Ensuite, identifie l’objet affecté : cellule, disque, flash, port réseau, instance, service, diskgroup ou target Enterprise Manager. Enfin, vérifie si l’anomalie modifie réellement l’expérience des sessions : hausse des waits, baisse de débit, erreurs applicatives ou alertes critiques. Une métrique élevée sans impact observable peut rester un signal de capacité ; une métrique modérée mais corrélée à des erreurs peut être prioritaire.
+
+### Commandes / vues utiles
+
+```bash
+uptime
+vmstat 1 5
+srvctl status database -d <DB_UNIQUE_NAME>
+olsnodes -n
+```
+
+```sql
+select inst_id, event, total_waits, time_waited_micro
+from gv$system_event
+where event like 'cell%' or event like 'gc%' or event like 'log file%'
+order by time_waited_micro desc fetch first 20 rows only;
+
+select inst_id, name, value
+from gv$sysstat
+where name like 'cell%' or name like 'physical%'
+order by inst_id, name;
+```
+
+### Comment interpréter
+
+L’interprétation correcte cherche une corrélation, pas une coïncidence. Si la métrique change avant le symptôme applicatif, elle peut être causale. Si elle change après, elle peut être une conséquence. Si elle ne change que sur un composant, la portée est locale. Si elle change partout, la cause est probablement un workload ou une opération de plate-forme. Une instance lente ne prouve pas une cellule lente ; le diagnostic RAC reste indispensable.
+
+### Exercice pratique
+
+Une instance RAC est lente alors que les cellules semblent normales. Quelle piste explores-tu ?
+
+### Corrigé détaillé
+
+Il faut vérifier CPU, mémoire, services RAC, répartition des sessions, waits `gc%`, plans SQL et réseau interconnect. Si les cellules sont normales mais une instance souffre, la cause peut être locale au database server, à un service mal réparti ou à une contention RAC.
+
+### Limites et pièges
+
+Le principal piège est de diagnostiquer depuis une capture unique. Exadata est fortement parallèle : un instantané peut masquer un pic court, un effet de cache ou une opération transitoire. Il faut conserver l’horodatage, comparer plusieurs composants et éviter les actions correctives sans preuve. Les commandes proposées ici restent read-only et servent à documenter l’état, pas à modifier la plate-forme.
+
+### À retenir
+
+Pour les database servers, le monitoring expert relie métriques Exadata, vues Oracle, alertes et chronologie. La valeur pédagogique vient de l’interprétation, pas de l’accumulation de sorties brutes.
+
+[^v5-monitoring]: Oracle, *Monitoring Oracle Exadata Database Machine*, https://docs.oracle.com/en/engineered-systems/exadata-database-machine/dbmmn/

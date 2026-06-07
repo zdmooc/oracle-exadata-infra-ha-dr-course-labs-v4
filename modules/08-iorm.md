@@ -8,7 +8,7 @@
 
     IORM agit lorsque plusieurs workloads se disputent les I/O storage. Il complète Resource Manager : l’un gouverne les ressources Oracle côté base, l’autre influence l’accès aux I/O dans les cells.
 
-    Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
+    . Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
     ## 3. Concepts clés expliqués
 
@@ -38,7 +38,7 @@
 
     IORM agit lorsque plusieurs workloads se disputent les I/O storage. Il complète Resource Manager : l’un gouverne les ressources Oracle côté base, l’autre influence l’accès aux I/O dans les cells.
 
-    Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
+    . Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
 
     Pour ce module, les notions centrales sont **IORM Plan, Noisy neighbor, Consumer Group**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
 
@@ -102,13 +102,13 @@ select username,consumer_group from v$session where type=USER;
 
     Une bonne réponse commence par identifier les composants du chapitre : **IORM Plan, Noisy neighbor, Consumer Group**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
-    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
+    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance.  : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
     ## 13. Synthèse à retenir
 
     ```text
     À retenir
-    - IORM fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - IORM  : base, cluster, ASM, storage cells, réseau et outils Oracle.
     - Les notions centrales du chapitre sont : IORM Plan, Noisy neighbor, Consumer Group.
     - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
     - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
@@ -125,4 +125,68 @@ select username,consumer_group from v$session where type=USER;
 | [Oracle Database Documentation](https://docs.oracle.com/en/database/) | Vues dynamiques, SQL, RMAN, Data Guard, AWR/ASH selon licences. |
 | [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | Principes HA/DR, Data Guard, sauvegarde et continuité de service. |
 | [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, Exachk, ORAchk, TFA et diagnostics automatisés. |
+## Complément expert V5 — IORM comme gouverneur d’I/O côté storage cells
 
+### Explication technique spécifique
+
+IORM agit dans les **storage cells** pour arbitrer l’accès aux ressources I/O entre plusieurs bases, pluggable databases ou catégories de workloads. Il ne remplace pas Database Resource Manager : DBRM classe et gouverne les sessions côté base, alors qu’IORM protège l’accès au stockage partagé côté cellules. Dans une consolidation Exadata, IORM évite qu’un batch volumineux, un reporting non prioritaire ou une opération de maintenance monopolise les I/O au détriment d’une base OLTP critique. La décision est appliquée près du stockage, là où les requêtes iDB concurrentes arrivent depuis les database servers.[^v5-iorm]
+
+IORM peut utiliser des plans orientés base de données, catégories ou objectifs. Les paramètres définissent des allocations, limites ou priorités ; la cellule mesure ensuite la demande réelle et arbitre. Cela ne transforme pas un workload mal conçu en workload rapide, mais cela évite qu’un consommateur agressif dégrade tout l’environnement. L’intérêt est maximal dans les environnements consolidés, RAC multi-bases ou Cloud@Customer où plusieurs équipes partagent les mêmes cellules.
+
+```mermaid
+flowchart TD
+    DB1[Base OLTP critique] --> IDB1[Requêtes iDB]
+    DB2[Reporting décisionnel] --> IDB2[Requêtes iDB]
+    DB3[Batch chargement] --> IDB3[Requêtes iDB]
+    IDB1 --> CELL[IORM dans les storage cells]
+    IDB2 --> CELL
+    IDB3 --> CELL
+    CELL --> FLASH[Flash]
+    CELL --> DISK[Disques]
+    CELL --> POLICY[Priorités, allocations, limites]
+```
+
+### Exemple concret réaliste
+
+Une plate-forme héberge `CRMPRD`, `DWPRD` et `TESTLOAD`. Sans IORM, un chargement massif sur `TESTLOAD` peut provoquer une file d’attente I/O qui augmente la latence des lectures critiques de `CRMPRD`. Avec un plan IORM, `CRMPRD` reçoit une priorité ou une allocation minimale supérieure ; `TESTLOAD` reste autorisée mais ne peut pas consommer toute la bande passante cellule. Le DBA observe alors que les temps d’attente `cell single block physical read` et `cell smart table scan` de `CRMPRD` restent contenus pendant le batch.
+
+### Comment raisonner
+
+Le raisonnement IORM commence par identifier la concurrence réelle. Si une seule base utilise Exadata, IORM ne créera pas un gain spectaculaire. Si plusieurs bases ou services se disputent flash et disques, il faut classer les workloads par criticité métier, variabilité, fenêtre horaire et tolérance à la latence. Ensuite, on vérifie que les plans DBRM côté base et IORM côté cellule expriment la même intention. Une politique incohérente peut prioriser une session côté base mais la ralentir côté stockage, ou inversement.
+
+### Commandes / vues utiles
+
+```bash
+# Read-only : configuration et métriques IORM
+cellcli -e "list iormplan detail"
+cellcli -e "list metriccurrent where name like 'IORM%' attributes name,metricValue,objectName"
+cellcli -e "list metrichistory where name like 'IORM%' attributes name,metricValue,collectionTime"
+```
+
+```sql
+-- Read-only : waits et consommation par base ou service
+select inst_id, event, total_waits, time_waited_micro from gv$system_event where event like 'cell%' order by time_waited_micro desc fetch first 20 rows only;
+select inst_id, name, value from gv$sysstat where name like 'cell%IO%' order by inst_id, name;
+```
+
+### Comment interpréter
+
+Une latence élevée sur des événements `cell%` ne prouve pas seule un problème IORM. Il faut corréler le moment, la concurrence, les métriques cellule et le plan actif. Si les métriques montrent qu’un workload limité atteint régulièrement son plafond alors que la base prioritaire reste stable, IORM fonctionne. Si toutes les bases souffrent en même temps, le problème peut être une saturation physique, un rebalance ASM, un patching, un défaut réseau ou une erreur de design de plan.
+
+### Exercice pratique
+
+Dans une consolidation, une base de reporting dégrade la base OLTP pendant la clôture mensuelle. Propose un raisonnement pour décider si IORM doit être utilisé et explique ce que tu vérifierais avant de modifier un plan.
+
+### Corrigé détaillé
+
+Il faut d’abord prouver la concurrence sur les cellules : mêmes fenêtres horaires, hausse des waits `cell smart table scan` ou `cell single block physical read`, augmentation de la latence I/O et activité importante de la base de reporting. Ensuite, il faut identifier la criticité : l’OLTP doit conserver une latence basse, le reporting peut accepter un débit plus faible. IORM est pertinent parce que le conflit se produit côté stockage partagé. Avant modification, on lit le plan actif avec `cellcli -e "list iormplan detail"`, les métriques IORM, les waits côté base et les services impliqués. Le corrigé est correct car il ne prescrit pas une politique arbitraire ; il établit le lien entre concurrence observable, objectif métier et gouvernance cellule.
+
+### Limites et pièges
+
+IORM ne corrige pas un SQL non sélectif, un mauvais partitionnement ou un manque de statistiques. Il ne remplace pas DBRM, qui reste nécessaire pour classer les sessions et limiter CPU ou parallelisme côté base. Un plan trop agressif peut ralentir des traitements nécessaires comme backups, chargements ou maintenance. Il faut donc tester en fenêtre contrôlée et surveiller les effets sur toutes les bases.
+
+### À retenir
+
+IORM est l’outil de justice I/O d’Exadata. Il protège les workloads critiques dans les cellules, surtout lorsque plusieurs bases partagent le même stockage.
+
+[^v5-iorm]: Oracle, *Managing I/O Resources with IORM*, https://docs.oracle.com/en/engineered-systems/exadata-database-machine/sagug/managing-io-resources.html

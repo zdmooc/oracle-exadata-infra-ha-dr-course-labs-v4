@@ -8,7 +8,7 @@
 
     Les storage cells fournissent des métriques riches. Le cours montre comment distinguer panne matérielle, saturation, latence, erreur transitoire et comportement normal de charge.
 
-    Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
+    . Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
     ## 3. Concepts clés expliqués
 
@@ -38,7 +38,7 @@
 
     Les storage cells fournissent des métriques riches. Le cours montre comment distinguer panne matérielle, saturation, latence, erreur transitoire et comportement normal de charge.
 
-    Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
+    . Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
 
     Pour ce module, les notions centrales sont **Alerthistory, MetricHistory, Flash Cache State**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
 
@@ -100,13 +100,13 @@ asmcmd lsdg
 
     Une bonne réponse commence par identifier les composants du chapitre : **Alerthistory, MetricHistory, Flash Cache State**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
-    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
+    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance.  : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
     ## 13. Synthèse à retenir
 
     ```text
     À retenir
-    - Monitoring Storage Servers fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - Monitoring Storage Servers  : base, cluster, ASM, storage cells, réseau et outils Oracle.
     - Les notions centrales du chapitre sont : Alerthistory, MetricHistory, Flash Cache State.
     - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
     - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
@@ -123,4 +123,78 @@ asmcmd lsdg
 | [Oracle Database Documentation](https://docs.oracle.com/en/database/) | Vues dynamiques, SQL, RMAN, Data Guard, AWR/ASH selon licences. |
 | [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | Principes HA/DR, Data Guard, sauvegarde et continuité de service. |
 | [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, Exachk, ORAchk, TFA et diagnostics automatisés. |
+## Complément expert V5 — Monitoring des storage servers
 
+### Explication technique spécifique
+
+Le monitoring Exadata ne consiste pas à regarder une seule alerte ou un seul graphe. Pour **les storage servers**, l’objectif est de rapprocher l’état matériel, l’état logiciel, les métriques courantes et la perception côté base. Une alerte cellule peut être bénigne si elle correspond à une transition attendue, mais elle peut aussi expliquer une hausse de latence observée par les sessions Oracle. La démarche experte consiste à identifier la mesure native, son objet, son horodatage, puis à la comparer avec les waits, les statistiques SQL et l’état ASM. Enterprise Manager apporte une vision centralisée, tandis que `cellcli`, les vues dynamiques et les journaux de diagnostic donnent une preuve locale.[^v5-monitoring]
+
+Pour ce thème, un DBA confirmé doit distinguer **symptôme**, **cause probable** et **preuve observable**. Le symptôme typique est : une seule cellule montre une latence I/O plus élevée que les autres. La cause peut être locale au composant, liée à une saturation, à une opération planifiée ou à une panne partielle. La preuve doit venir d’au moins deux sources indépendantes : métrique cellule et vue base, alerte système et historique Enterprise Manager, ou état ASM et journal Exadata.
+
+| Indicateur | Ce qu’il mesure | Interprétation experte |
+|---|---|---|
+| `CD_IO_RQ_R_SM_SEC` | Petites lectures par cell disk | Montre la pression OLTP ou metadata |
+| `CD_IO_RQ_W_LG_SEC` | Grandes écritures par cell disk | Peut signaler chargement, backup ou rebalance |
+| `FC_BY_USED` | Utilisation Flash Cache | Aide à comprendre pression flash |
+
+```mermaid
+flowchart LR
+    DB[Database Servers] --> IDB[iDB]
+    IDB --> C1[Cellule 1]
+    IDB --> C2[Cellule 2]
+    IDB --> C3[Cellule 3]
+    C2 --> PD[Physical disks]
+    C2 --> FC[Flash Cache]
+    C2 --> AL[Alertes cellule]
+```
+
+### Exemple concret réaliste
+
+Pendant une fenêtre de reporting, l’équipe observe une seule cellule montre une latence I/O plus élevée que les autres. Le réflexe débutant serait de conclure à un problème général de performance. L’analyse V5 impose plutôt de vérifier si l’événement est isolé à une cellule, à un database server, à un réseau ou à une base. Si une seule cellule montre une métrique anormale alors que les autres restent stables, la piste est locale. Si toutes les cellules montrent la même hausse au même instant, il faut chercher une opération globale : chargement massif, backup, rebalance ASM, scan parallèle ou patching.
+
+### Comment raisonner
+
+Commence par fixer la période exacte de l’incident, puis compare trois horloges : heure applicative, heure base et heure composant Exadata. Ensuite, identifie l’objet affecté : cellule, disque, flash, port réseau, instance, service, diskgroup ou target Enterprise Manager. Enfin, vérifie si l’anomalie modifie réellement l’expérience des sessions : hausse des waits, baisse de débit, erreurs applicatives ou alertes critiques. Une métrique élevée sans impact observable peut rester un signal de capacité ; une métrique modérée mais corrélée à des erreurs peut être prioritaire.
+
+### Commandes / vues utiles
+
+```bash
+cellcli -e "list cell detail"
+cellcli -e "list celldisk attributes name,status,size,freeSpace"
+cellcli -e "list metriccurrent where objectType = 'CELLDISK' attributes name,metricValue,objectName"
+cellcli -e "list physicaldisk detail"
+```
+
+```sql
+select inst_id, event, total_waits, time_waited_micro
+from gv$system_event
+where event like 'cell%' or event like 'gc%' or event like 'log file%'
+order by time_waited_micro desc fetch first 20 rows only;
+
+select inst_id, name, value
+from gv$sysstat
+where name like 'cell%' or name like 'physical%'
+order by inst_id, name;
+```
+
+### Comment interpréter
+
+L’interprétation correcte cherche une corrélation, pas une coïncidence. Si la métrique change avant le symptôme applicatif, elle peut être causale. Si elle change après, elle peut être une conséquence. Si elle ne change que sur un composant, la portée est locale. Si elle change partout, la cause est probablement un workload ou une opération de plate-forme. Une cellule lente n’est pas forcément en panne ; elle peut porter plus d’extents chauds ou subir un rebalance.
+
+### Exercice pratique
+
+Une cellule est plus lente que les autres pendant les scans. Donne une démarche read-only.
+
+### Corrigé détaillé
+
+La démarche vérifie d’abord physicaldisk et celldisk, puis métriques CELLDISK et GRIDDISK, alertes et répartition ASM. Si une cellule a un disque dégradé ou une file d’attente anormale, l’hypothèse locale est forte. Si toutes les cellules ont le même profil, la cause est probablement workload ou plan SQL.
+
+### Limites et pièges
+
+Le principal piège est de diagnostiquer depuis une capture unique. Exadata est fortement parallèle : un instantané peut masquer un pic court, un effet de cache ou une opération transitoire. Il faut conserver l’horodatage, comparer plusieurs composants et éviter les actions correctives sans preuve. Les commandes proposées ici restent read-only et servent à documenter l’état, pas à modifier la plate-forme.
+
+### À retenir
+
+Pour les storage servers, le monitoring expert relie métriques Exadata, vues Oracle, alertes et chronologie. La valeur pédagogique vient de l’interprétation, pas de l’accumulation de sorties brutes.
+
+[^v5-monitoring]: Oracle, *Monitoring Oracle Exadata Database Machine*, https://docs.oracle.com/en/engineered-systems/exadata-database-machine/dbmmn/

@@ -8,7 +8,7 @@
 
     L’écosystème support Exadata accélère le diagnostic, mais il exige une description claire de l’impact et des fichiers pertinents.
 
-    Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
+    . Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
     ## 3. Concepts clés expliqués
 
@@ -38,7 +38,7 @@
 
     L’écosystème support Exadata accélère le diagnostic, mais il exige une description claire de l’impact et des fichiers pertinents.
 
-    Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
+    . Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
 
     Pour ce module, les notions centrales sont **ASR, Service Request, Sanitization**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
 
@@ -101,13 +101,13 @@ asr show_status
 
     Une bonne réponse commence par identifier les composants du chapitre : **ASR, Service Request, Sanitization**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
-    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
+    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance.  : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
     ## 13. Synthèse à retenir
 
     ```text
     À retenir
-    - Automated Support Ecosystem fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - Automated Support Ecosystem  : base, cluster, ASM, storage cells, réseau et outils Oracle.
     - Les notions centrales du chapitre sont : ASR, Service Request, Sanitization.
     - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
     - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
@@ -124,4 +124,57 @@ asr show_status
 | [Oracle Database Documentation](https://docs.oracle.com/en/database/) | Vues dynamiques, SQL, RMAN, Data Guard, AWR/ASH selon licences. |
 | [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | Principes HA/DR, Data Guard, sauvegarde et continuité de service. |
 | [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, Exachk, ORAchk, TFA et diagnostics automatisés. |
+## Complément expert V5 — ASR, diagnostics et écosystème support automatisé
 
+### Explication technique spécifique
+
+L’écosystème support Exadata associe alertes locales, diagnostics, Enterprise Manager, Auto Service Request, collecte SRDC, bundles ExaWatcher et procédures My Oracle Support. ASR peut ouvrir automatiquement des demandes de service pour certains défauts matériels, mais il ne remplace pas l’analyse DBA. Le rôle du support expert est de fournir des preuves propres : horodatage, composant, sévérité, impact, commandes read-only, historique et comparaison avec la période saine.[^v5-asr]
+
+```mermaid
+flowchart LR
+    COMPONENT[Composant Exadata] --> ALERT[Alerte locale]
+    ALERT --> EM[Enterprise Manager]
+    ALERT --> ASR[Auto Service Request]
+    DBA[DBA] --> SRDC[Collecte SRDC]
+    SRDC --> MOS[My Oracle Support]
+    ASR --> MOS
+```
+
+### Exemple concret réaliste
+
+Une flash card signale des erreurs prédictives. ASR peut créer un SR, mais le DBA doit joindre l’état de la cellule, les alertes, la période d’impact et la confirmation que les bases restent disponibles. Cette documentation accélère le remplacement et évite les échanges inutiles avec le support.
+
+### Comment raisonner
+
+Sépare automatisation et décision. L’automatisation détecte, collecte ou ouvre ; la décision opérationnelle priorise, planifie et communique. Il faut vérifier si l’alerte est matérielle, logicielle, réseau ou supervision, puis collecter les preuves adaptées.
+
+### Commandes / vues utiles
+
+```bash
+cellcli -e "list alerthistory attributes severity,alertMessage,beginTime"
+cellcli -e "list cell detail"
+cellcli -e "list physicaldisk detail"
+adrci exec="show alert -tail 100"
+```
+
+### Comment interpréter
+
+Un SR automatique ne prouve pas l’impact applicatif ; il prouve une condition supportable par Oracle. Inversement, une dégradation de performance peut exiger un SR même sans ASR. La qualité de la chronologie et des preuves détermine la rapidité d’escalade.
+
+### Exercice pratique
+
+Une alerte ASR est ouverte pour un composant flash. Que joins-tu au dossier support ?
+
+### Corrigé détaillé
+
+Il faut joindre alerte, détail cellule, détail composant, période, impact observé, état ASM, métriques I/O et versions. Le corrigé est correct car il fournit au support la chaîne composant-impact-preuve au lieu d’un message vague.
+
+### Limites et pièges
+
+Ne pas attendre qu’ASR ouvre tout. Ne pas envoyer des captures sans horodatage. Ne pas modifier la configuration pour “voir si ça passe” avant collecte.
+
+### À retenir
+
+Le support automatisé accélère la réaction, mais l’expertise DBA transforme l’alerte en diagnostic exploitable.
+
+[^v5-asr]: Oracle, *Auto Service Request for Oracle Engineered Systems*, https://www.oracle.com/support/premier/auto-service-request.html

@@ -8,7 +8,7 @@
 
     Le patching Exadata couvre plusieurs couches. Un bon chapitre enseigne la logique de séquence et de risque sans fournir de commande destructrice hors procédure officielle.
 
-    Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
+    . Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
     ## 3. Concepts clés expliqués
 
@@ -38,7 +38,7 @@
 
     Le patching Exadata couvre plusieurs couches. Un bon chapitre enseigne la logique de séquence et de risque sans fournir de commande destructrice hors procédure officielle.
 
-    Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
+    . Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
 
     Pour ce module, les notions centrales sont **Rolling patch, Pre-check, Rollback**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
 
@@ -102,13 +102,13 @@ exachk
 
     Une bonne réponse commence par identifier les composants du chapitre : **Rolling patch, Pre-check, Rollback**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
-    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
+    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance.  : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
     ## 13. Synthèse à retenir
 
     ```text
     À retenir
-    - Patching fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - Patching  : base, cluster, ASM, storage cells, réseau et outils Oracle.
     - Les notions centrales du chapitre sont : Rolling patch, Pre-check, Rollback.
     - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
     - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
@@ -125,4 +125,61 @@ exachk
 | [Oracle Database Documentation](https://docs.oracle.com/en/database/) | Vues dynamiques, SQL, RMAN, Data Guard, AWR/ASH selon licences. |
 | [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | Principes HA/DR, Data Guard, sauvegarde et continuité de service. |
 | [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, Exachk, ORAchk, TFA et diagnostics automatisés. |
+## Complément expert V5 — Patching Exadata sans perte de contrôle
 
+### Explication technique spécifique
+
+Le patching Exadata concerne plusieurs couches : database home, Grid Infrastructure, Exadata System Software des cellules, firmware, OS des database servers, switches et agents. Le risque principal n’est pas seulement l’échec d’un patch ; c’est l’incohérence temporaire entre couches ou l’absence de plan de retour. Un patch rolling peut maintenir le service, mais seulement si RAC, services, redondance ASM, capacité restante et procédures sont vérifiés.[^v5-patching]
+
+```mermaid
+flowchart TD
+    PRE[Pré-checks] --> GI[Grid Infrastructure]
+    PRE --> DB[Database Homes]
+    PRE --> CELL[Storage Cells]
+    CELL --> ONE[Une cellule à la fois]
+    GI --> RAC[RAC rolling]
+    ONE --> POST[Post-checks]
+    RAC --> POST
+    POST --> DOC[Validation et preuves]
+```
+
+### Exemple concret réaliste
+
+Avant de patcher une cellule, on vérifie que les diskgroups peuvent tolérer l’indisponibilité temporaire de ses grid disks. Pendant l’intervention, ASM peut resynchroniser après retour. Si une autre cellule est déjà dégradée, continuer le patch peut transformer une maintenance en incident. La fenêtre de patching doit donc intégrer l’état réel, pas seulement le calendrier.
+
+### Comment raisonner
+
+Le raisonnement patching part des prérequis : backups, état RAC, état ASM, absence de panne matérielle, versions actuelles, compatibilité et plan de rollback. Ensuite on ordonne les couches selon la procédure Oracle. Enfin on valide : versions, alertes, services, instances, diskgroups et performance de base.
+
+### Commandes / vues utiles
+
+```bash
+opatch lsinventory
+crsctl stat res -t
+srvctl status database -d <DB_UNIQUE_NAME>
+asmcmd lsdg
+cellcli -e "list cell attributes name,releaseVersion,status"
+cellcli -e "list alerthistory attributes severity,alertMessage,beginTime"
+```
+
+### Comment interpréter
+
+Une commande de version réussie n’est pas une validation complète. Il faut vérifier l’état fonctionnel des services, l’absence d’alertes critiques, la capacité ASM et les symptômes post-maintenance. Une différence de version peut être attendue pendant rolling patch, mais elle doit être temporaire et documentée.
+
+### Exercice pratique
+
+Pourquoi faut-il vérifier ASM avant de patcher une storage cell ?
+
+### Corrigé détaillé
+
+Parce que le patch rendra potentiellement indisponibles des grid disks de cette cellule. ASM doit disposer de redondance et de capacité suffisantes pour maintenir les fichiers accessibles. Si un autre failure group est déjà dégradé, le patch augmente le risque. La réponse correcte relie patch cellule, grid disks, failure groups et disponibilité des fichiers.
+
+### Limites et pièges
+
+Ne pas patcher pour “tester” en production. Ne pas ignorer les alertes hardware avant maintenance. Ne pas confondre rolling avec sans impact : les performances peuvent baisser pendant la fenêtre.
+
+### À retenir
+
+Le patching Exadata est une opération de cohérence multi-couches. Les preuves avant et après patch comptent autant que la commande de patch elle-même.
+
+[^v5-patching]: Oracle, *Oracle Exadata Database Machine Maintenance Guide*, https://docs.oracle.com/en/engineered-systems/exadata-database-machine/dbmmn/

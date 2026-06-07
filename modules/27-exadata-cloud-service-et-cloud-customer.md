@@ -8,7 +8,7 @@
 
     Les modèles cloud changent les droits, outils et responsabilités. Le savoir-faire Exadata reste utile, mais l’exploitation passe aussi par OCI, IAM, compartiments et fenêtres de maintenance cloud.
 
-    Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
+    . Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
     ## 3. Concepts clés expliqués
 
@@ -38,7 +38,7 @@
 
     Les modèles cloud changent les droits, outils et responsabilités. Le savoir-faire Exadata reste utile, mais l’exploitation passe aussi par OCI, IAM, compartiments et fenêtres de maintenance cloud.
 
-    Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
+    . Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
 
     Pour ce module, les notions centrales sont **Responsabilité partagée, VM Cluster, IAM OCI**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
 
@@ -100,13 +100,13 @@ crsctl stat res -t
 
     Une bonne réponse commence par identifier les composants du chapitre : **Responsabilité partagée, VM Cluster, IAM OCI**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
-    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
+    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance.  : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
     ## 13. Synthèse à retenir
 
     ```text
     À retenir
-    - Exadata Cloud Service et Cloud@Customer fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - Exadata Cloud Service et Cloud@Customer  : base, cluster, ASM, storage cells, réseau et outils Oracle.
     - Les notions centrales du chapitre sont : Responsabilité partagée, VM Cluster, IAM OCI.
     - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
     - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
@@ -123,4 +123,62 @@ crsctl stat res -t
 | [Oracle Database Documentation](https://docs.oracle.com/en/database/) | Vues dynamiques, SQL, RMAN, Data Guard, AWR/ASH selon licences. |
 | [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | Principes HA/DR, Data Guard, sauvegarde et continuité de service. |
 | [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, Exachk, ORAchk, TFA et diagnostics automatisés. |
+## Complément expert V5 — Exadata Cloud Service et Cloud@Customer
 
+### Explication technique spécifique
+
+Exadata Cloud Service et Exadata Cloud@Customer apportent Exadata dans un modèle opéré avec des responsabilités partagées. Le client conserve l’administration des bases, schémas, performances SQL, sauvegardes logiques et choix applicatifs ; Oracle gère une partie de l’infrastructure, du cycle de vie et des opérations cloud selon le service. La différence essentielle est le lieu d’exécution et le modèle opérationnel : Exadata Cloud Service s’exécute dans OCI, tandis que Cloud@Customer place l’infrastructure dans le datacenter client avec un contrôle cloud Oracle.[^v5-exacc]
+
+```mermaid
+flowchart LR
+    DBA[DBA client] --> DB[Base Oracle]
+    DB --> VM[VM Cluster]
+    VM --> EXA[Infrastructure Exadata]
+    OCI[Plan de contrôle OCI] --> VM
+    ORA[Oracle Operations] --> EXA
+    APP[Applications client] --> DB
+```
+
+### Exemple concret réaliste
+
+Une équipe migre une base critique vers Exadata Cloud@Customer pour conserver la proximité réseau avec les applications on-premises. Les DBA doivent adapter leurs procédures : certaines opérations passent par OCI, les accès OS peuvent être encadrés, les sauvegardes peuvent utiliser des services cloud et les fenêtres de maintenance sont planifiées avec le modèle de service.
+
+### Comment raisonner
+
+Avant migration, il faut classifier les responsabilités : qui patche quoi, qui sauvegarde quoi, qui surveille quoi, qui ouvre les SR, qui valide la sécurité réseau et qui teste le DR. Ensuite, il faut comparer contraintes on-premises, latence, conformité, coûts, intégration IAM et exploitation quotidienne.
+
+### Commandes / vues utiles
+
+```sql
+select name, open_mode, database_role from v$database;
+select inst_id, instance_name, host_name, status from gv$instance;
+select name, value from v$parameter where name in ('db_unique_name','cluster_database');
+```
+
+```bash
+# Read-only : commandes locales selon droits disponibles
+srvctl status database -d <DB_UNIQUE_NAME>
+asmcmd lsdg
+```
+
+### Comment interpréter
+
+Dans le cloud Exadata, l’absence d’accès à certaines couches n’est pas forcément une limitation anormale ; c’est parfois une frontière de responsabilité. Le diagnostic doit donc distinguer preuve technique accessible au DBA, métrique OCI, ticket Oracle et runbook interne.
+
+### Exercice pratique
+
+Explique pourquoi une procédure Exadata on-premises ne peut pas être copiée telle quelle vers Exadata Cloud@Customer.
+
+### Corrigé détaillé
+
+Parce que le modèle de responsabilité, les outils, les accès, les fenêtres de maintenance et l’intégration OCI changent. Les principes Oracle Database restent proches, mais les actions infrastructure peuvent relever d’Oracle ou du plan de contrôle cloud. La réponse correcte cite les responsabilités, l’accès, la supervision, les backups et la maintenance.
+
+### Limites et pièges
+
+Ne pas supposer que tous les accès root ou cellule sont disponibles. Ne pas ignorer les contraintes réseau OCI, IAM et maintenance. Ne pas comparer uniquement les performances ; l’exploitation et la conformité comptent autant.
+
+### À retenir
+
+Exadata Cloud et Cloud@Customer conservent les principes Exadata, mais changent fortement le modèle opérationnel et les responsabilités.
+
+[^v5-exacc]: Oracle, *Oracle Exadata Cloud@Customer Documentation*, https://docs.oracle.com/en/cloud/cloud-at-customer/exadata-cloud-at-customer/

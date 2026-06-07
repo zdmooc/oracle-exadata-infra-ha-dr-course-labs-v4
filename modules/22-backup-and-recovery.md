@@ -8,7 +8,7 @@
 
     Une sauvegarde n’a de valeur que si la récupération est possible dans les délais. Exadata peut accélérer certaines opérations, mais RMAN, archivelogs et tests restent indispensables.
 
-    Dans Exadata, une décision prise sur une couche se répercute souvent sur les autres. Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
+    . Une requête SQL peut dépendre du plan d’exécution, du cache flash, de la configuration ASM, de l’état d’une cell et du réseau privé. Ce chapitre montre donc le sujet comme un mécanisme technique, pas comme une simple procédure administrative.
 
     ## 3. Concepts clés expliqués
 
@@ -38,7 +38,7 @@
 
     Une sauvegarde n’a de valeur que si la récupération est possible dans les délais. Exadata peut accélérer certaines opérations, mais RMAN, archivelogs et tests restent indispensables.
 
-    Le fonctionnement réel peut être résumé en trois niveaux. Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
+    . Au niveau **base de données**, Oracle produit un plan d’exécution, gère les sessions, écrit les redo et consulte les vues dynamiques. Au niveau **cluster et stockage**, Grid Infrastructure et ASM rendent disponibles les fichiers de base sur les diskgroups. Au niveau **Exadata**, les storage cells, le cache flash, les métriques et le logiciel système influencent directement le débit, la latence et parfois le volume de données transmis aux DB servers.
 
     Pour ce module, les notions centrales sont **RMAN, FRA, Restore validation**. Elles déterminent la façon dont le composant réagit à une charge réelle. Une bonne lecture technique consiste à comprendre d’abord le chemin suivi par l’opération, puis les conditions qui rendent le mécanisme efficace ou inefficace. Une mauvaise lecture consiste à supposer que la plateforme corrige automatiquement un mauvais modèle de données, une requête mal écrite ou une architecture réseau incomplète.
 
@@ -104,13 +104,13 @@ select * from v$recovery_file_dest;
 
     Une bonne réponse commence par identifier les composants du chapitre : **RMAN, FRA, Restore validation**. Elle explique ensuite le chemin technique suivi par l’opération et indique pourquoi les commandes proposées permettent de vérifier ce chemin. Les commandes attendues sont celles de la section 7, adaptées aux noms réels de l’environnement.
 
-    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance. La recommandation finale doit rester proportionnée : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
+    Le corrigé doit aussi distinguer les observations et les décisions. Par exemple, constater un lag, une alerte cell, un volume `eligible bytes` ou une ressource CRS offline ne suffit pas : il faut expliquer la conséquence sur l’application, la disponibilité ou la performance.  : optimisation SQL, ajustement de plan de ressources, revue réseau, ouverture SR, test de restore ou préparation CAB selon le module.
 
     ## 13. Synthèse à retenir
 
     ```text
     À retenir
-    - Backup and Recovery fait partie d’un ensemble Exadata intégré : base, cluster, ASM, storage cells, réseau et outils Oracle.
+    - Backup and Recovery  : base, cluster, ASM, storage cells, réseau et outils Oracle.
     - Les notions centrales du chapitre sont : RMAN, FRA, Restore validation.
     - Les commandes de lecture permettent de comprendre le mécanisme avant toute action de changement.
     - Les erreurs les plus coûteuses viennent d’une lecture isolée d’une seule couche.
@@ -127,4 +127,61 @@ select * from v$recovery_file_dest;
 | [Oracle Database Documentation](https://docs.oracle.com/en/database/) | Vues dynamiques, SQL, RMAN, Data Guard, AWR/ASH selon licences. |
 | [Oracle Maximum Availability Architecture](https://www.oracle.com/database/technologies/high-availability/maa.html) | Principes HA/DR, Data Guard, sauvegarde et continuité de service. |
 | [Oracle Autonomous Health Framework](https://docs.oracle.com/en/engineered-systems/health-diagnostics/autonomous-health-framework/) | AHF, Exachk, ORAchk, TFA et diagnostics automatisés. |
+## Complément expert V5 — Backup, recovery et Exadata
 
+### Explication technique spécifique
+
+Sur Exadata, RMAN lit les datafiles via ASM et peut écrire vers RECO, une librairie média, un ZDLRA, un stockage NFS ou un réseau de backup. La performance dépend de la bande passante cellule, du parallélisme RMAN, du débit cible, du redo généré, de la capacité RECO et de la concurrence avec les workloads SQL. Le design expert sépare sauvegarde locale rapide, copie externe, rétention, validation et scénario de restauration. Une sauvegarde réussie mais impossible à restaurer dans le RTO attendu n’est pas un design HA/DR satisfaisant.[^v5-rman]
+
+```mermaid
+flowchart LR
+    DATA[Diskgroup DATA] --> RMAN[Canaux RMAN]
+    RECO[Diskgroup RECO] --> RMAN
+    RMAN --> FRA[Fast Recovery Area]
+    RMAN --> MEDIA[Media Manager ou ZDLRA]
+    RMAN --> NET[Réseau backup]
+    RMAN --> CATALOG[Recovery Catalog]
+```
+
+### Exemple concret réaliste
+
+Une base de 40 To est sauvegardée chaque nuit. Le backup commence vite puis ralentit lorsque RECO approche d’un seuil élevé et que l’archivage s’accumule. Le problème n’est pas forcément la lecture depuis DATA ; il peut venir du débit de destination, d’un nombre de canaux mal dimensionné, d’une compression coûteuse CPU ou d’une saturation réseau backup.
+
+### Comment raisonner
+
+Analyse RMAN par flux : source ASM, canaux, CPU, réseau, cible et catalogue. Vérifie aussi l’objectif de restauration : restaurer sur la même machine, sur un site DR, vers une appliance de récupération ou vers un environnement de test. Le nombre de canaux doit être cohérent avec la cible ; trop de canaux peut dégrader la production.
+
+### Commandes / vues utiles
+
+```sql
+select * from v$rman_backup_job_details order by start_time desc fetch first 10 rows only;
+select name, space_limit/1024/1024 mb_limit, space_used/1024/1024 mb_used from v$recovery_file_dest;
+select sequence#, applied, archived, completion_time from v$archived_log order by sequence# desc fetch first 20 rows only;
+```
+
+```bash
+asmcmd lsdg
+cellcli -e "list metriccurrent where name like 'CD_IO%' attributes name,metricValue,objectName"
+```
+
+### Comment interpréter
+
+Un backup lent peut être source-bound ou target-bound. Si les cellules lisent vite mais la cible écrit lentement, le réseau ou média manager est suspect. Si les waits RMAN montrent lecture lente et que les cellules sont chargées, la concurrence I/O est à étudier. Si RECO est sous pression, le risque immédiat peut être l’archivage et la capacité de récupération.
+
+### Exercice pratique
+
+Un backup RMAN dépasse sa fenêtre de nuit depuis trois jours. Donne un diagnostic read-only et une conclusion argumentée.
+
+### Corrigé détaillé
+
+Il faut lire `v$rman_backup_job_details`, vérifier la FRA avec `v$recovery_file_dest`, contrôler les archivelogs, ASM `lsdg`, métriques cellule et réseau backup. Si la durée augmente avec le volume d’archivelogs, la cause peut être fonctionnelle. Si le débit chute sans hausse de volume, la cible ou le réseau est suspect. La conclusion doit citer la preuve temporelle et la couche limitante.
+
+### Limites et pièges
+
+Ne pas confondre sauvegarde et restaurabilité. Ne pas activer compression ou chiffrement sans mesurer CPU. Ne pas utiliser RECO comme espace illimité. Un test de restore reste la preuve ultime.
+
+### À retenir
+
+Le backup Exadata est un pipeline. Le diagnostic expert identifie le maillon lent et vérifie que le RTO/RPO reste atteignable.
+
+[^v5-rman]: Oracle, *Oracle Database Backup and Recovery User's Guide*, https://docs.oracle.com/en/database/oracle/oracle-database/19/bradv/
