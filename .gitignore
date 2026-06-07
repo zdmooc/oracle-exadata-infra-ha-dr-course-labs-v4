@@ -1,0 +1,20 @@
+# Système
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Logs et exports locaux
+*.log
+*.tmp
+reports/local-*
+
+# Secrets
+*.pem
+*.key
+*.env
+oci_config
+wallet_*

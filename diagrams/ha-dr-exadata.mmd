@@ -1,0 +1,13 @@
+flowchart LR
+    subgraph PRIMARY[Site primaire]
+      APP1[Applications] --> RAC1[RAC sur Exadata primaire]
+      RAC1 --> DATA1[(DATA/RECO ASM)]
+    end
+    subgraph STANDBY[Site standby]
+      RAC2[RAC ou SI sur Exadata standby] --> DATA2[(DATA/RECO ASM)]
+    end
+    RAC1 -- Redo transport --> RAC2
+    BROKER[Data Guard Broker] --> RAC1
+    BROKER --> RAC2
+    RMAN[RMAN Backups] --> DATA1
+    RMAN --> DATA2

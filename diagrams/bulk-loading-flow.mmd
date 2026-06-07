@@ -1,0 +1,6 @@
+flowchart LR
+  Source[Source Files] --> Stage[Staging Area/DBFS/External Path]
+  Stage --> Validate[Format and Quality Checks]
+  Validate --> Load[SQL Loader External Table Data Pump]
+  Load --> Index[Index/Constraints/Stats]
+  Index --> Report[Load Report]

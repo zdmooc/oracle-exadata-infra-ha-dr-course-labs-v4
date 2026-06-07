@@ -1,0 +1,9 @@
+flowchart TB
+  DC[Datacenter] --> NET[Client/Backup/Management Network]
+  DC --> RACK[Exadata Rack]
+  RACK --> DB[Database Servers: GI ASM DB]
+  RACK --> CELL[Storage Cells: Exadata System Software]
+  DB <--> INT[Internal RDMA Network: IB or RoCE]
+  CELL <--> INT
+  CELL --> ASM[ASM Diskgroups DATA RECO DBFS]
+  DB --> MON[Enterprise Manager / AHF / Exachk]
