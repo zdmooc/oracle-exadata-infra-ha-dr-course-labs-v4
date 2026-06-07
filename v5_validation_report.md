@@ -9,7 +9,7 @@
 | generic_hits_priority_total | 0 |
 | module_count | 28 |
 | lab_count | 19 |
-| mermaid_count | 19 |
+| mermaid_count | 34 |
 | min_words_priority | 1811 |
 | avg_words_priority | 2228.1 |
 
@@ -44,25 +44,7 @@ Aucun point bloquant détecté.
 ## Git status
 
 ```text
-[31mM[m modules/02-architecture.md
- [31mM[m modules/06-exadata-storage-server-configuration.md
- [31mM[m modules/07-asm-et-modele-de-stockage.md
- [31mM[m modules/08-iorm.md
- [31mM[m modules/10-smart-scan.md
- [31mM[m modules/13-bulk-data-loading.md
- [31mM[m modules/14-platform-monitoring-introduction.md
- [31mM[m modules/15-monitoring-exadata-system-software.md
- [31mM[m modules/16-enterprise-manager-cloud-control.md
- [31mM[m modules/17-monitoring-storage-servers.md
- [31mM[m modules/18-monitoring-database-servers.md
- [31mM[m modules/19-monitoring-network.md
- [31mM[m modules/20-monitoring-other-components.md
- [31mM[m modules/21-other-monitoring-tools.md
- [31mM[m modules/22-backup-and-recovery.md
- [31mM[m modules/23-ha-dr-et-maa.md
- [31mM[m modules/25-patching.md
- [31mM[m modules/26-automated-support-ecosystem.md
- [31mM[m modules/27-exadata-cloud-service-et-cloud-customer.md
+working tree clean
 ```
 
 ## JSON brut
@@ -79,9 +61,9 @@ Aucun point bloquant détecté.
   "empty_files": [],
   "module_count": 28,
   "lab_count": 19,
-  "mermaid_count": 19,
+  "mermaid_count": 34,
   "min_words_priority": 1811,
   "avg_words_priority": 2228.1,
-  "git_status_short": "\u001b[31mM\u001b[m modules/02-architecture.md\n \u001b[31mM\u001b[m modules/06-exadata-storage-server-configuration.md\n \u001b[31mM\u001b[m modules/07-asm-et-modele-de-stockage.md\n \u001b[31mM\u001b[m modules/08-iorm.md\n \u001b[31mM\u001b[m modules/10-smart-scan.md\n \u001b[31mM\u001b[m modules/13-bulk-data-loading.md\n \u001b[31mM\u001b[m modules/14-platform-monitoring-introduction.md\n \u001b[31mM\u001b[m modules/15-monitoring-exadata-system-software.md\n \u001b[31mM\u001b[m modules/16-enterprise-manager-cloud-control.md\n \u001b[31mM\u001b[m modules/17-monitoring-storage-servers.md\n \u001b[31mM\u001b[m modules/18-monitoring-database-servers.md\n \u001b[31mM\u001b[m modules/19-monitoring-network.md\n \u001b[31mM\u001b[m modules/20-monitoring-other-components.md\n \u001b[31mM\u001b[m modules/21-other-monitoring-tools.md\n \u001b[31mM\u001b[m modules/22-backup-and-recovery.md\n \u001b[31mM\u001b[m modules/23-ha-dr-et-maa.md\n \u001b[31mM\u001b[m modules/25-patching.md\n \u001b[31mM\u001b[m modules/26-automated-support-ecosystem.md\n \u001b[31mM\u001b[m modules/27-exadata-cloud-service-et-cloud-customer.md"
+  "git_status_short": ""
 }
 ```
